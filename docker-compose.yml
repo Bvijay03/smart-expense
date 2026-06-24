@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: smart-expense-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: smartexpense
+      POSTGRES_PASSWORD: smartexpense
+      POSTGRES_DB: smart_expense
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

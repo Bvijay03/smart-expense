@@ -1,0 +1,31 @@
+## NOW — Quick Wins
+- [x] Shared expense detail view (tap card → see full split breakdown)
+- [x] Edit & delete personal expenses
+- [x] Remove member from group
+- [x] Edit group name/description
+- [ ] Profile — set your display name
+- [x] Dark mode toggle (already in profile)
+- [ ] Budget alerts — warn when near/over budget
+
+## SOON — Medium Effort
+- [ ] Detailed settlements — per-person breakdown (who owes who exactly)
+- [ ] Analytics report — charts, category breakdown, month comparison
+- [ ] Custom expense categories
+- [ ] Move personal expense → group
+- [ ] Search/filter expenses (by date, category, amount)
+
+## FUTURE — After Offline Migration
+- [ ] Recurring expenses (monthly rent, subscriptions)
+- [ ] Export to CSV/PDF
+- [ ] Receipt photo attachment
+- [ ] Split by custom percentage/exact input per member
+- [ ] Local push notifications / reminders (you owe X)
+- [ ] Group invite via link/QR code
+- [ ] Multi-currency support
+- [ ] Voice entry — "spent 200 on food" (NLP integration)
+
+## DONE
+- [x] Add members by name (email optional)
+- [x] Member selection in shared expense split
+- [x] Delete group
+- [x] Delete shared expense

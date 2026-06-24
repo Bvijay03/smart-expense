@@ -1,0 +1,204 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum GroupRole {
+  ADMIN
+  MEMBER
+}
+
+enum SplitType {
+  EQUAL
+  EXACT
+  PERCENTAGE
+}
+
+enum SettlementStatus {
+  PENDING
+  SETTLED
+}
+
+enum NotificationType {
+  GROUP_INVITE
+  SETTLEMENT_REMINDER
+  BUDGET_THRESHOLD
+  GENERAL
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  name         String
+  avatarUrl    String?   @map("avatar_url")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  refreshTokens    RefreshToken[]
+  expenses         Expense[]
+  groupMemberships GroupMember[]
+  groupsCreated    Group[]         @relation("GroupCreator")
+  expensesPaid     SharedExpense[] @relation("PaidBy")
+  expenseSplits    ExpenseSplit[]
+  settlementsFrom  Settlement[]    @relation("SettlementFrom")
+  settlementsTo    Settlement[]    @relation("SettlementTo")
+  budgets          Budget[]
+  notifications    Notification[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Expense {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  amount      Decimal   @db.Decimal(12, 2)
+  category    String
+  expenseDate DateTime  @map("expense_date") @db.Date
+  notes       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, expenseDate])
+  @@map("expenses")
+}
+
+model Group {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  createdById String    @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  createdBy      User            @relation("GroupCreator", fields: [createdById], references: [id])
+  members        GroupMember[]
+  sharedExpenses SharedExpense[]
+  settlements    Settlement[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id       String    @id @default(uuid())
+  groupId  String    @map("group_id")
+  userId   String    @map("user_id")
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now()) @map("joined_at")
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([groupId, userId])
+  @@map("group_members")
+}
+
+model SharedExpense {
+  id          String    @id @default(uuid())
+  groupId     String    @map("group_id")
+  paidById    String    @map("paid_by")
+  description String
+  amount      Decimal   @db.Decimal(12, 2)
+  category    String
+  expenseDate DateTime  @map("expense_date") @db.Date
+  splitType   SplitType @map("split_type")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  group  Group          @relation(fields: [groupId], references: [id])
+  paidBy User           @relation("PaidBy", fields: [paidById], references: [id])
+  splits ExpenseSplit[]
+
+  @@index([groupId])
+  @@map("shared_expenses")
+}
+
+model ExpenseSplit {
+  id              String   @id @default(uuid())
+  sharedExpenseId String   @map("shared_expense_id")
+  userId          String   @map("user_id")
+  amountOwed      Decimal  @map("amount_owed") @db.Decimal(12, 2)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  sharedExpense SharedExpense @relation(fields: [sharedExpenseId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id])
+
+  @@unique([sharedExpenseId, userId])
+  @@map("expense_splits")
+}
+
+model Settlement {
+  id         String           @id @default(uuid())
+  groupId    String           @map("group_id")
+  fromUserId String           @map("from_user_id")
+  toUserId   String           @map("to_user_id")
+  amount     Decimal          @db.Decimal(12, 2)
+  status     SettlementStatus @default(PENDING)
+  settledAt  DateTime?        @map("settled_at")
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+
+  group    Group @relation(fields: [groupId], references: [id])
+  fromUser User  @relation("SettlementFrom", fields: [fromUserId], references: [id])
+  toUser   User  @relation("SettlementTo", fields: [toUserId], references: [id])
+
+  @@index([groupId, status])
+  @@map("settlements")
+}
+
+model Budget {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  category  String   @default("ALL")
+  amount    Decimal  @db.Decimal(12, 2)
+  month     Int
+  year      Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, category, month, year])
+  @@map("budgets")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  title     String
+  body      String
+  read      Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+  @@map("notifications")
+}
