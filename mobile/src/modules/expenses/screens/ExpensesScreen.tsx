@@ -1,9 +1,12 @@
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
   FlatList,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -17,6 +20,7 @@ import { EmptyState } from "@/shared/components/EmptyState";
 import { ErrorState } from "@/shared/components/ErrorState";
 import { useTheme } from "@/shared/hooks/useTheme";
 import { spacing } from "@/shared/theme";
+import { EXPENSE_CATEGORIES } from "@/shared/utils/constants";
 import { RootStackParamList } from "@/shared/navigation/types";
 import { getErrorMessage } from "@/shared/services/api";
 
@@ -24,6 +28,8 @@ export function ExpensesScreen() {
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["expenses"],
@@ -39,18 +45,27 @@ export function ExpensesScreen() {
   const confirmDelete = (id: string) => {
     Alert.alert("Delete expense", "Are you sure?", [
       { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => deleteMutation.mutate(id),
-      },
+      { text: "Delete", style: "destructive", onPress: () => deleteMutation.mutate(id) },
     ]);
   };
 
+  const allItems = data?.items ?? [];
+
+  const filtered = useMemo(() => {
+    return allItems.filter((item) => {
+      const matchesSearch =
+        !search ||
+        item.category.toLowerCase().includes(search.toLowerCase()) ||
+        (item.notes ?? "").toLowerCase().includes(search.toLowerCase());
+      const matchesCategory = !activeCategory || item.category === activeCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [allItems, search, activeCategory]);
+
+  const totalFiltered = filtered.reduce((sum, item) => sum + item.amount, 0);
+
   if (isLoading) return <LoadingState />;
   if (isError) return <ErrorState message="Failed to load expenses" onRetry={refetch} />;
-
-  const items = data?.items ?? [];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -64,36 +79,78 @@ export function ExpensesScreen() {
         </TouchableOpacity>
       </View>
 
-      {items.length === 0 ? (
-        <EmptyState
-          title="No expenses yet"
-          message="Tap + to add your first expense"
-          icon="receipt-outline"
+      {/* Search bar */}
+      <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <Ionicons name="search-outline" size={16} color={colors.textSecondary} />
+        <TextInput
+          style={[styles.searchInput, { color: colors.text }]}
+          placeholder="Search by category or notes..."
+          placeholderTextColor={colors.textSecondary}
+          value={search}
+          onChangeText={setSearch}
         />
+        {search ? (
+          <TouchableOpacity onPress={() => setSearch("")}>
+            <Ionicons name="close-circle" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+        ) : null}
+      </View>
+
+      {/* Category filter chips */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chipRow}>
+        <TouchableOpacity
+          style={[styles.chip, { backgroundColor: !activeCategory ? colors.primary : colors.surface, borderColor: colors.border }]}
+          onPress={() => setActiveCategory(null)}
+        >
+          <Text style={{ color: !activeCategory ? "#fff" : colors.text, fontSize: 12 }}>All</Text>
+        </TouchableOpacity>
+        {EXPENSE_CATEGORIES.map((cat) => (
+          <TouchableOpacity
+            key={cat}
+            style={[styles.chip, { backgroundColor: activeCategory === cat ? colors.primary : colors.surface, borderColor: colors.border }]}
+            onPress={() => setActiveCategory(activeCategory === cat ? null : cat)}
+          >
+            <Text style={{ color: activeCategory === cat ? "#fff" : colors.text, fontSize: 12 }}>{cat}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Total display */}
+      {filtered.length > 0 && (
+        <View style={styles.totalRow}>
+          <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
+            {filtered.length} expense{filtered.length !== 1 ? "s" : ""}
+          </Text>
+          <Text style={[styles.totalAmount, { color: colors.primary }]}>
+            Total: ₹{totalFiltered.toFixed(2)}
+          </Text>
+        </View>
+      )}
+
+      {filtered.length === 0 ? (
+        allItems.length === 0 ? (
+          <EmptyState title="No expenses yet" message="Tap + to add your first expense" icon="receipt-outline" />
+        ) : (
+          <EmptyState title="No results" message="Try a different search or filter" icon="search-outline" />
+        )
       ) : (
         <FlatList
-          data={items}
+          data={filtered}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
             <Card>
               <View style={styles.row}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.category, { color: colors.text }]}>
-                    {item.category}
-                  </Text>
+                  <Text style={[styles.category, { color: colors.text }]}>{item.category}</Text>
                   <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
                     {new Date(item.expenseDate).toLocaleDateString()}
                   </Text>
                   {item.notes ? (
-                    <Text style={{ color: colors.textSecondary, marginTop: 4 }}>
-                      {item.notes}
-                    </Text>
+                    <Text style={{ color: colors.textSecondary, marginTop: 4 }}>{item.notes}</Text>
                   ) : null}
                 </View>
-                <Text style={[styles.amount, { color: colors.primary }]}>
-                  ₹{item.amount.toFixed(2)}
-                </Text>
+                <Text style={[styles.amount, { color: colors.primary }]}>₹{item.amount.toFixed(2)}</Text>
                 <TouchableOpacity
                   onPress={() => navigation.navigate("EditExpense", {
                     expenseId: item.id,
@@ -121,14 +178,19 @@ export function ExpensesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: spacing.md },
   headerRow: { flexDirection: "row", alignItems: "flex-start" },
-  fab: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: spacing.sm,
+  fab: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", marginTop: spacing.sm },
+  searchBar: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    borderWidth: 1, borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 8,
+    marginBottom: spacing.sm,
   },
+  searchInput: { flex: 1, fontSize: 14 },
+  chipScroll: { flexGrow: 0, marginBottom: spacing.sm },
+  chipRow: { flexDirection: "row", gap: 6, paddingRight: spacing.sm },
+  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
+  totalRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.xs },
+  totalAmount: { fontWeight: "700", fontSize: 14 },
   list: { paddingBottom: spacing.xl },
   row: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   category: { fontSize: 16, fontWeight: "600" },

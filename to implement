@@ -3,16 +3,16 @@
 - [x] Edit & delete personal expenses
 - [x] Remove member from group
 - [x] Edit group name/description
-- [ ] Profile — set your display name
+- [x] Profile — set your display name
 - [x] Dark mode toggle (already in profile)
 - [ ] Budget alerts — warn when near/over budget
 
 ## SOON — Medium Effort
-- [ ] Detailed settlements — per-person breakdown (who owes who exactly)
+- [x] Detailed settlements — per-person breakdown (who owes who exactly)
 - [ ] Analytics report — charts, category breakdown, month comparison
 - [ ] Custom expense categories
 - [ ] Move personal expense → group
-- [ ] Search/filter expenses (by date, category, amount)
+- [x] Search/filter expenses (by date, category, amount)
 
 ## FUTURE — After Offline Migration
 - [ ] Recurring expenses (monthly rent, subscriptions)
