@@ -194,7 +194,7 @@ export function GroupDetailScreen({ route, navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      {/* ── Expenses list ── */}
+      {/* ── Expenses list (preview: 2 items) ── */}
       <View style={styles.expenseHeader}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
           Expenses ({expenses.data?.length ?? 0})
@@ -207,35 +207,49 @@ export function GroupDetailScreen({ route, navigation }: Props) {
       </View>
 
       {expenses.data?.length ? (
-        expenses.data.map((exp) => (
-          <TouchableOpacity
-            key={exp.id}
-            onPress={() => navigation.navigate("SharedExpenseDetail", { expenseId: exp.id, groupId })}
-          >
-            <Card>
-              <View style={styles.expenseRow}>
-                <View style={[styles.expenseIcon, { backgroundColor: colors.primary + "15" }]}>
-                  <Ionicons name="receipt-outline" size={18} color={colors.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.text, fontWeight: "600" }}>{exp.description}</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
-                    Paid by {exp.paidBy.name} · {exp.splitType} · {new Date(exp.expenseDate).toLocaleDateString()}
+        <>
+          {expenses.data.slice(0, 2).map((exp) => (
+            <TouchableOpacity
+              key={exp.id}
+              onPress={() => navigation.navigate("SharedExpenseDetail", { expenseId: exp.id, groupId })}
+            >
+              <Card>
+                <View style={styles.expenseRow}>
+                  <View style={[styles.expenseIcon, { backgroundColor: colors.primary + "15" }]}>
+                    <Ionicons name="receipt-outline" size={18} color={colors.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.text, fontWeight: "600" }}>{exp.description}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+                      Paid by {exp.paidBy.name} · {exp.splitType} · {new Date(exp.expenseDate).toLocaleDateString()}
+                    </Text>
+                  </View>
+                  <Text style={{ color: colors.primary, fontWeight: "700", marginRight: 8 }}>
+                    ₹{exp.amount.toFixed(2)}
                   </Text>
+                  <TouchableOpacity
+                    onPress={() => confirmDeleteExpense(exp.id, exp.description)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons name="trash-outline" size={16} color={colors.error ?? "#ef4444"} />
+                  </TouchableOpacity>
                 </View>
-                <Text style={{ color: colors.primary, fontWeight: "700", marginRight: 8 }}>
-                  ₹{exp.amount.toFixed(2)}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => confirmDeleteExpense(exp.id, exp.description)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Ionicons name="trash-outline" size={16} color={colors.error ?? "#ef4444"} />
-                </TouchableOpacity>
-              </View>
-            </Card>
-          </TouchableOpacity>
-        ))
+              </Card>
+            </TouchableOpacity>
+          ))}
+
+          {expenses.data.length > 2 && (
+            <TouchableOpacity
+              style={[styles.viewMoreBtn, { borderColor: colors.primary + "44", backgroundColor: colors.primary + "08" }]}
+              onPress={() => navigation.navigate("GroupExpenses", { groupId, groupName: group.data?.name ?? groupName })}
+            >
+              <Text style={[styles.viewMoreText, { color: colors.primary }]}>
+                View all {expenses.data.length} expenses
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+        </>
       ) : (
         <Card>
           <View style={styles.emptyState}>
@@ -299,4 +313,10 @@ const styles = StyleSheet.create({
   expenseRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   expenseIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   emptyState: { alignItems: "center", paddingVertical: spacing.md },
+  viewMoreBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 6, paddingVertical: 12, borderRadius: 12, borderWidth: 1,
+    marginBottom: spacing.sm,
+  },
+  viewMoreText: { fontSize: 14, fontWeight: "600" },
 });

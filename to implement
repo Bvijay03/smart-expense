@@ -21,8 +21,8 @@
 - [ ] Split by custom percentage/exact input per member
 - [ ] Local push notifications / reminders (you owe X)
 - [ ] Group invite via link/QR code
-- [ ] Multi-currency support
-- [ ] Voice entry — "spent 200 on food" (NLP integration)
+% - [ ] Multi-currency support
+% - [ ] Voice entry — "spent 200 on food" (NLP integration)
 
 ## DONE
 - [x] Add members by name (email optional)

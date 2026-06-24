@@ -24,4 +24,5 @@ export type RootStackParamList = {
   AddBudget: undefined;
   Notifications: undefined;
   Profile: undefined;
+  GroupExpenses: { groupId: string; groupName: string };
 };

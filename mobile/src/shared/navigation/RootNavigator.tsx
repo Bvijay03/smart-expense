@@ -19,6 +19,8 @@ import { ProfileScreen } from "@/modules/profile/screens/ProfileScreen";
 import { MainTabs } from "./MainTabs";
 import { useThemeStore } from "@/shared/hooks/useTheme";
 import { AuthStackParamList, RootStackParamList } from "./types";
+import { GroupExpensesScreen } from "@/modules/groups/screens/GroupExpensesScreen";
+
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -35,14 +37,18 @@ function AuthNavigator() {
 function AppNavigator() {
   const { colors } = useThemeStore();
 
+
   return (
+
     <RootStack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
         contentStyle: { backgroundColor: colors.background },
+
       }}
     >
+
       <RootStack.Screen
         name="MainTabs"
         component={MainTabs}
@@ -60,7 +66,9 @@ function AppNavigator() {
       <RootStack.Screen name="AddBudget" component={AddBudgetScreen} options={{ title: "Set Budget" }} />
       <RootStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: "Notifications" }} />
       <RootStack.Screen name="Profile" component={ProfileScreen} options={{ title: "Profile" }} />
+      <RootStack.Screen name="GroupExpenses" component={GroupExpensesScreen} options={{ headerShown: false }} />
     </RootStack.Navigator>
+
   );
 }
 
