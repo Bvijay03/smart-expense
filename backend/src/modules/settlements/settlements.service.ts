@@ -83,23 +83,79 @@ export const settlementsService = {
 
     await groupsService.ensureMember(settlement.groupId, userId);
 
-    if (
-      settlement.fromUserId !== userId &&
-      settlement.toUserId !== userId
-    ) {
-      throw new AppError(403, "FORBIDDEN", "Not part of this settlement");
-    }
-
     const updated = await settlementsRepository.markSettled(settlementId);
 
     await notificationsService.create({
       userId: settlement.toUserId,
       type: "SETTLEMENT_REMINDER",
       title: "Settlement completed",
-      body: `${settlement.fromUser.name} marked a settlement of ${decimalToNumber(settlement.amount)} as paid`,
+      body: `${settlement.fromUser.name} marked a settlement of ₹${decimalToNumber(settlement.amount)} as paid`,
       metadata: { settlementId, groupId: settlement.groupId },
     });
 
     return formatSettlement(updated);
+  },
+
+  async settleWithAmount(userId: string, settlementId: string, paidAmount: number) {
+    const settlement = await settlementsRepository.findById(settlementId);
+    if (!settlement) {
+      throw new AppError(404, "NOT_FOUND", "Settlement not found");
+    }
+
+    await groupsService.ensureMember(settlement.groupId, userId);
+
+    if (settlement.status !== "PENDING") {
+      throw new AppError(400, "BAD_REQUEST", "Settlement already settled");
+    }
+
+    const owedAmount = decimalToNumber(settlement.amount);
+    const diff = roundMoney(paidAmount - owedAmount);
+
+    // Mark current settlement as settled
+    const updated = await settlementsRepository.markSettled(settlementId);
+
+    let remainderInfo = "";
+
+    if (diff < -0.01) {
+      // Underpaid: fromUser still owes the remainder to toUser
+      const remainder = roundMoney(-diff);
+      await settlementsRepository.createMany(settlement.groupId, [
+        { fromUserId: settlement.fromUserId, toUserId: settlement.toUserId, amount: remainder },
+      ]);
+      remainderInfo = ` (partial: ₹${remainder.toFixed(2)} still pending)`;
+    } else if (diff > 0.01) {
+      // Overpaid: toUser now owes the excess back to fromUser
+      const excess = roundMoney(diff);
+      await settlementsRepository.createMany(settlement.groupId, [
+        { fromUserId: settlement.toUserId, toUserId: settlement.fromUserId, amount: excess },
+      ]);
+      remainderInfo = ` (overpaid by ₹${excess.toFixed(2)} — reverse settlement created)`;
+    }
+
+    // Notify the recipient
+    await notificationsService.create({
+      userId: settlement.toUserId,
+      type: "SETTLEMENT_REMINDER",
+      title: "Settlement payment received",
+      body: `${settlement.fromUser.name} paid ₹${paidAmount.toFixed(2)} of ₹${owedAmount.toFixed(2)}${remainderInfo}`,
+      metadata: { settlementId, groupId: settlement.groupId },
+    });
+
+    // Notify the payer too
+    await notificationsService.create({
+      userId: settlement.fromUserId,
+      type: "SETTLEMENT_REMINDER",
+      title: "Settlement recorded",
+      body: `You paid ₹${paidAmount.toFixed(2)} to ${settlement.toUser.name}${remainderInfo}`,
+      metadata: { settlementId, groupId: settlement.groupId },
+    });
+
+    return {
+      settlement: formatSettlement(updated),
+      paidAmount,
+      owedAmount,
+      diff,
+      status: diff < -0.01 ? "PARTIAL" : diff > 0.01 ? "OVERPAID" : "EXACT",
+    };
   },
 };

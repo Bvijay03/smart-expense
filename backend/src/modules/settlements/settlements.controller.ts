@@ -39,4 +39,17 @@ export const settlementsController = {
       next(err);
     }
   },
+
+  async settleWithAmount(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const result = await settlementsService.settleWithAmount(
+        req.user!.userId,
+        paramId(req, "id"),
+        req.body.amount,
+      );
+      res.json({ data: result });
+    } catch (err) {
+      next(err);
+    }
+  },
 };

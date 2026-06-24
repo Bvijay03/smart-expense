@@ -84,6 +84,9 @@ export const settlementService = {
   markSettled(id: string) {
     return api.patch<{ data: Settlement }>(`/settlements/${id}`);
   },
+  settleWithAmount(id: string, amount: number) {
+    return api.post(`/settlements/${id}/settle`, { amount });
+  },
 };
 
 export const budgetService = {

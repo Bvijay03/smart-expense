@@ -24,5 +24,10 @@ settlementRouter.patch(
   validateParams(settlementIdSchema),
   settlementsController.markSettled,
 );
+settlementRouter.post(
+  "/:id/settle",
+  validateParams(settlementIdSchema),
+  settlementsController.settleWithAmount,
+);
 
 export { groupRouter as settlementsGroupRouter, settlementRouter };
