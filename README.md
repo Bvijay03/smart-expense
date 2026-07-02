@@ -89,3 +89,22 @@ Feature-based modules in both `mobile/src/modules/` and `backend/src/modules/`.
 ## Future (V2)
 
 Receipt attachments, OCR, AI categorization, push notifications, voice entry.
+
+## DB export fallback (fast CSV dump)
+
+If you need a quick, full export of group-related CSVs from the local Postgres container, use `psql`'s `COPY` command inside the container and then copy the file to the host.
+
+Example (from project root):
+
+```bash
+# run a COPY query inside the postgres container to write CSV to /tmp
+docker compose exec -T postgres psql -U smartexpense -d smart_expense -c "COPY (SELECT g.id AS group_id, g.name AS group_name, se.id AS shared_expense_id, se.description, se.amount, se.category, se.expense_date, se.split_type, payer.id AS paid_by_user_id, payer.name AS paid_by_name, payer.email AS paid_by_email, member.id AS split_user_id, member.name AS split_user_name, member.email AS split_user_email, es.amount_owed AS split_amount_owed, se.created_at FROM shared_expenses se JOIN groups g ON g.id = se.group_id JOIN users payer ON payer.id = se.paid_by JOIN expense_splits es ON es.shared_expense_id = se.id JOIN users member ON member.id = es.user_id WHERE se.deleted_at IS NULL ORDER BY g.name, se.expense_date DESC, member.name) TO '/tmp/group-expenses-details.csv' WITH CSV HEADER;"
+
+# copy file from container to host CWD
+docker compose cp postgres:/tmp/group-expenses-details.csv ./group-expenses-details.csv
+```
+
+Notes:
+- Adjust database user, database name or container service name if you changed them in `docker-compose.yml` or `backend/.env`.
+- The SQL above flattens shared expenses to one row per split (includes payer and per-split user). You can modify the `SELECT` to add/remove columns.
+- If you prefer a Node script, see `backend/data/export-groups-csv.mjs` which also produces `groups.csv`, `group_members.csv`, `shared_expenses.csv`, and `settlements.csv`.

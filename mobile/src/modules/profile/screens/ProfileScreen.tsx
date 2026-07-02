@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "@/modules/authentication/store/authStore";
 import { useThemeStore } from "@/shared/hooks/useTheme";
@@ -9,12 +11,14 @@ import { Button } from "@/shared/components/Button";
 import { getErrorMessage } from "@/shared/services/api";
 import { api } from "@/shared/services/api";
 import { spacing } from "@/shared/theme";
+import { RootStackParamList } from "@/shared/navigation/types";
 
 export function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
   const { colors, isDark, toggleTheme } = useThemeStore();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(user?.name ?? "");
@@ -80,6 +84,25 @@ export function ProfileScreen() {
         <Text style={[styles.value, { color: colors.text }]}>{user?.email}</Text>
       </Card>
 
+      {/* Quick Actions */}
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Manage</Text>
+      <View style={styles.actionGrid}>
+        <TouchableOpacity
+          style={[styles.actionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          onPress={() => navigation.navigate("Categories")}
+        >
+          <Ionicons name="pricetag-outline" size={24} color="#F59E0B" />
+          <Text style={[styles.actionLabel, { color: colors.text }]}>Categories</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          onPress={() => navigation.navigate("Recurring")}
+        >
+          <Ionicons name="repeat-outline" size={24} color="#8B5CF6" />
+          <Text style={[styles.actionLabel, { color: colors.text }]}>Recurring</Text>
+        </TouchableOpacity>
+      </View>
+
       <Button
         title={isDark ? "☀️  Switch to Light Theme" : "🌙  Switch to Dark Theme"}
         variant="secondary"
@@ -112,5 +135,14 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   spacer: { height: spacing.md },
+
+  // Manage section
+  sectionTitle: { fontSize: 16, fontWeight: "600", marginTop: spacing.md, marginBottom: spacing.sm },
+  actionGrid: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
+  actionCard: {
+    flex: 1, alignItems: "center", paddingVertical: 18,
+    borderRadius: 14, borderWidth: 1, gap: 6,
+  },
+  actionLabel: { fontSize: 13, fontWeight: "600" },
 });
 

@@ -184,7 +184,7 @@ export function SettlementsScreen({ route }: Props) {
 
             {/* What this person gets back */}
             {personGets.length > 0 && (
-              <View style={[!personOwes.length && styles.debtContainer, personOwes.length && styles.getsSection, { borderTopColor: colors.border }]}>
+              <View style={[!personOwes.length ? styles.debtContainer : undefined, personOwes.length ? styles.getsSection : undefined, { borderTopColor: colors.border }]}>
                 {personGets.map((s) => (
                   <View key={s.id} style={styles.debtInfo}>
                     <Ionicons name="arrow-down-circle-outline" size={18} color={colors.success} />

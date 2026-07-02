@@ -58,6 +58,79 @@ export const groupsRepository = {
     });
   },
 
+  async findByUserIdWithBalances(userId: string) {
+    const groups = await prisma.group.findMany({
+      where: {
+        deletedAt: null,
+        members: { some: { userId } },
+      },
+      include: {
+        members: {
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
+        _count: { select: { sharedExpenses: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    // For each group, calculate user's contribution (paid) and net balance (owed - paid)
+    const groupIds = groups.map((g) => g.id);
+
+    if (groupIds.length === 0) {
+      return groups.map((g) => ({
+        ...g,
+        userContribution: 0,
+        userNetBalance: 0,
+      }));
+    }
+
+    const [contributions, owedPerGroup] = await Promise.all([
+      // Total paid by user per group
+      prisma.sharedExpense.groupBy({
+        by: ["groupId"],
+        where: {
+          groupId: { in: groupIds },
+          paidById: userId,
+          deletedAt: null,
+        },
+        _sum: { amount: true },
+      }),
+      // Total owed by user per group — use a separate query per group
+      // since Prisma can't groupBy a relation field directly
+      Promise.all(
+        groupIds.map(async (gId) => {
+          const result = await prisma.expenseSplit.aggregate({
+            where: {
+              userId,
+              sharedExpense: {
+                groupId: gId,
+                deletedAt: null,
+              },
+            },
+            _sum: { amountOwed: true },
+          });
+          return { groupId: gId, totalOwed: Number(result._sum.amountOwed ?? 0) };
+        })
+      ),
+    ]);
+
+    const contributionMap = new Map(
+      contributions.map((c) => [c.groupId, Number(c._sum.amount ?? 0)])
+    );
+    const owedMap = new Map(
+      owedPerGroup.map((o) => [o.groupId, o.totalOwed])
+    );
+
+    return groups.map((g) => ({
+      ...g,
+      userContribution: contributionMap.get(g.id) ?? 0,
+      // net > 0 means group owes user; net < 0 means user owes group
+      userNetBalance: (contributionMap.get(g.id) ?? 0) - (owedMap.get(g.id) ?? 0),
+    }));
+  },
+
   isMember(groupId: string, userId: string) {
     return prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId } },

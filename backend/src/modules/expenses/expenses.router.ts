@@ -10,13 +10,16 @@ import {
   createExpenseSchema,
   expenseIdSchema,
   expenseQuerySchema,
+  exportCsvQuerySchema,
   updateExpenseSchema,
+  moveToGroupSchema,
 } from "./expenses.schema";
 
 const router = Router();
 
 router.use(authMiddleware);
 router.get("/", validateQuery(expenseQuerySchema), expensesController.list);
+router.get("/export", validateQuery(exportCsvQuerySchema), expensesController.exportCsv);
 router.post("/", validateBody(createExpenseSchema), expensesController.create);
 router.get(
   "/:id",
@@ -33,6 +36,12 @@ router.delete(
   "/:id",
   validateParams(expenseIdSchema),
   expensesController.delete,
+);
+router.post(
+  "/:id/move-to-group",
+  validateParams(expenseIdSchema),
+  validateBody(moveToGroupSchema),
+  expensesController.moveToGroup,
 );
 
 export default router;

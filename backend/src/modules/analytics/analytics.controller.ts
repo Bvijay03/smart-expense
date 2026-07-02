@@ -38,4 +38,15 @@ export const analyticsController = {
       next(err);
     }
   },
+
+  async exportCsv(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const csv = await analyticsService.exportCsv(req.user!.userId, req.query);
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader("Content-Disposition", 'attachment; filename="analytics.csv"');
+      res.send(csv);
+    } catch (err) {
+      next(err);
+    }
+  },
 };

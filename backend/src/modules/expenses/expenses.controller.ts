@@ -58,4 +58,32 @@ export const expensesController = {
       next(err);
     }
   },
+
+  async moveToGroup(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const result = await expensesService.moveToGroup(
+        req.user!.userId,
+        paramId(req, "id"),
+        req.body,
+      );
+      res.json({ data: result });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async exportCsv(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { groupId } = req.query as { groupId?: string };
+      const csv = await expensesService.exportCsv(req.user!.userId, groupId);
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${groupId ? "group-expenses" : "expenses"}.csv"`,
+      );
+      res.send(csv);
+    } catch (err) {
+      next(err);
+    }
+  },
 };

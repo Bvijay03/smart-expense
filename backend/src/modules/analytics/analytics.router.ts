@@ -22,5 +22,10 @@ router.get(
   validateQuery(analyticsQuerySchema),
   analyticsController.trends,
 );
+router.get(
+  "/export",
+  validateQuery(analyticsQuerySchema),
+  analyticsController.exportCsv,
+);
 
 export default router;

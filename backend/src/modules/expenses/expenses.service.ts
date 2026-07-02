@@ -1,10 +1,16 @@
 import { AppError } from "@/utils/app-error";
 import { decimalToNumber } from "@/utils/helpers";
+import { budgetsService } from "@/modules/budgets/budgets.service";
+import { notificationsService } from "@/modules/notifications/notifications.service";
+import { groupsService } from "@/modules/groups/groups.service";
+import { sharedExpensesService } from "@/modules/shared-expenses/shared-expenses.service";
+import { sharedExpensesRepository } from "@/modules/shared-expenses/shared-expenses.repository";
 import { expensesRepository } from "./expenses.repository";
 import {
   CreateExpenseInput,
   ExpenseQueryInput,
   UpdateExpenseInput,
+  MoveToGroupInput,
 } from "./expenses.schema";
 
 function formatExpense(expense: {
@@ -29,9 +35,42 @@ function formatExpense(expense: {
   };
 }
 
+async function checkBudgetAlerts(userId: string, expenseDate: Date) {
+  try {
+    const month = expenseDate.getMonth() + 1;
+    const year = expenseDate.getFullYear();
+    const budgets = await budgetsService.list(userId, month, year);
+
+    for (const budget of budgets) {
+      const percent = budget.percentUsed;
+
+      if (percent >= 100 && percent < 110) {
+        await notificationsService.create({
+          userId,
+          type: "BUDGET_THRESHOLD",
+          title: "Budget exceeded!",
+          body: `You've exceeded your ${budget.category} budget of ₹${budget.amount.toFixed(2)}. Spent: ₹${budget.spent.toFixed(2)} (${percent}%)`,
+          metadata: { budgetId: budget.id, category: budget.category, percentUsed: percent },
+        });
+      } else if (percent >= 80 && percent < 90) {
+        await notificationsService.create({
+          userId,
+          type: "BUDGET_THRESHOLD",
+          title: "Budget warning",
+          body: `You've used ${percent}% of your ${budget.category} budget (₹${budget.spent.toFixed(2)} of ₹${budget.amount.toFixed(2)})`,
+          metadata: { budgetId: budget.id, category: budget.category, percentUsed: percent },
+        });
+      }
+    }
+  } catch {
+    // Budget check is non-critical — don't fail the expense operation
+  }
+}
+
 export const expensesService = {
   async create(userId: string, input: CreateExpenseInput) {
     const expense = await expensesRepository.create({ userId, ...input });
+    checkBudgetAlerts(userId, input.expenseDate);
     return formatExpense(expense);
   },
 
@@ -58,6 +97,7 @@ export const expensesService = {
     const existing = await expensesRepository.findById(id, userId);
     if (!existing) throw new AppError(404, "NOT_FOUND", "Expense not found");
     const updated = await expensesRepository.update(id, input);
+    checkBudgetAlerts(userId, updated.expenseDate);
     return formatExpense(updated);
   },
 
@@ -65,5 +105,115 @@ export const expensesService = {
     const existing = await expensesRepository.findById(id, userId);
     if (!existing) throw new AppError(404, "NOT_FOUND", "Expense not found");
     await expensesRepository.softDelete(id);
+  },
+
+  async moveToGroup(userId: string, expenseId: string, input: MoveToGroupInput) {
+    const expense = await expensesRepository.findById(expenseId, userId);
+    if (!expense) throw new AppError(404, "NOT_FOUND", "Expense not found");
+
+    // Ensure user is a member of the target group
+    await groupsService.ensureMember(input.groupId, userId);
+
+    // Get group members for equal split
+    const group = await groupsService.getById(userId, input.groupId);
+    const members = (group as any).members ?? [];
+    if (members.length === 0) {
+      throw new AppError(400, "NO_MEMBERS", "Group has no members");
+    }
+
+    const amount = decimalToNumber(expense.amount);
+    const description = input.description || expense.notes || `${expense.category} expense`;
+
+    // Create shared expense with equal split
+    const sharedExpense = await sharedExpensesService.create(userId, input.groupId, {
+      paidById: userId,
+      description,
+      amount,
+      category: expense.category,
+      expenseDate: expense.expenseDate,
+      splitType: "EQUAL",
+      splits: members.map((m: { userId: string }) => ({ userId: m.userId, value: 1 })),
+    });
+
+    // Soft-delete the original personal expense
+    await expensesRepository.softDelete(expenseId);
+
+    return sharedExpense;
+  },
+
+  async exportCsv(userId: string, groupId?: string) {
+    if (groupId) {
+      await groupsService.ensureMember(groupId, userId);
+      const items = await sharedExpensesRepository.findAllForExport(groupId);
+
+      const header = [
+        "groupId",
+        "groupName",
+        "sharedExpenseId",
+        "description",
+        "amount",
+        "category",
+        "expenseDate",
+        "splitType",
+        "paidByUserId",
+        "paidByName",
+        "paidByEmail",
+        "splitUserId",
+        "splitUserName",
+        "splitUserEmail",
+        "splitAmountOwed",
+        "createdAt",
+      ];
+
+      const rows = items.flatMap((item) =>
+        item.splits.map((split) => [
+          item.group.id,
+          item.group.name,
+          item.id,
+          item.description,
+          decimalToNumber(item.amount),
+          item.category,
+          item.expenseDate.toISOString(),
+          item.splitType,
+          item.paidBy.id,
+          item.paidBy.name,
+          item.paidBy.email,
+          split.user.id,
+          split.user.name,
+          split.user.email,
+          decimalToNumber(split.amountOwed),
+          item.createdAt.toISOString(),
+        ]),
+      );
+
+      const escapeCsv = (value: string | number) => {
+        const stringValue = String(value ?? "");
+        return /[",\n]/.test(stringValue)
+          ? `"${stringValue.replace(/"/g, '""')}"`
+          : stringValue;
+      };
+
+      return [header.join(","), ...rows.map((row) => row.map(escapeCsv).join(","))].join("\n");
+    }
+
+    const items = await expensesRepository.findAllForExport(userId);
+
+    const header = ["id", "amount", "category", "expenseDate", "notes", "createdAt"];
+    const rows = items.map((item) => [
+      item.id,
+      decimalToNumber(item.amount),
+      item.category,
+      item.expenseDate.toISOString(),
+      (item.notes ?? "").replace(/\n/g, " "),
+      item.createdAt.toISOString(),
+    ]);
+
+    const escapeCsv = (value: string | number) => {
+      const stringValue = String(value);
+      return /[",\n]/.test(stringValue) ? `"${stringValue.replace(/"/g, '""')}"` : stringValue;
+    };
+
+    const lines = [header.join(","), ...rows.map((row) => row.map(escapeCsv).join(","))];
+    return lines.join("\n");
   },
 };

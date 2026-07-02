@@ -5,18 +5,21 @@
 - [x] Edit group name/description
 - [x] Profile — set your display name
 - [x] Dark mode toggle (already in profile)
-- [ ] Budget alerts — warn when near/over budget
+- [x] Budget alerts — warn when near/over budget
 
 ## SOON — Medium Effort
 - [x] Detailed settlements — per-person breakdown (who owes who exactly)
-- [ ] Analytics report — charts, category breakdown, month comparison
-- [ ] Custom expense categories
+- [x] Analytics report — charts, category breakdown, month comparison
+- [x] Custom expense categories
 - [ ] Move personal expense → group
 - [x] Search/filter expenses (by date, category, amount)
+- [x] Verify changes end-to-end
 
 ## FUTURE — After Offline Migration
-- [ ] Recurring expenses (monthly rent, subscriptions)
-- [ ] Export to CSV/PDF
+- [x] Recurring expenses (monthly rent, subscriptions)
+- [x] Export to CSV
+- [x] Export directly from database to local CSV file
+- [ ] Export to PDF
 - [ ] Receipt photo attachment
 - [ ] Split by custom percentage/exact input per member
 - [ ] Local push notifications / reminders (you owe X)

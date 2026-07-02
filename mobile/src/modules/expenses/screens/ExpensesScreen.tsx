@@ -1,8 +1,11 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import {
   Alert,
   FlatList,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,7 +16,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
-import { expenseService } from "@/shared/services/modules";
+import { expenseService, groupService } from "@/shared/services/modules";
 import { Card, ScreenHeader } from "@/shared/components/Card";
 import { LoadingState } from "@/shared/components/LoadingState";
 import { EmptyState } from "@/shared/components/EmptyState";
@@ -30,15 +33,33 @@ export function ExpensesScreen() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [moveExpenseId, setMoveExpenseId] = useState<string | null>(null);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["expenses"],
     queryFn: () => expenseService.list().then((r) => r.data.data),
   });
 
+  const groupsQuery = useQuery({
+    queryKey: ["groups"],
+    queryFn: () => groupService.list().then((r) => r.data.data),
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => expenseService.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["expenses"] }),
+    onError: (err) => Alert.alert("Error", getErrorMessage(err)),
+  });
+
+  const moveMutation = useMutation({
+    mutationFn: ({ expenseId, groupId }: { expenseId: string; groupId: string }) =>
+      expenseService.moveToGroup(expenseId, groupId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
+      setMoveExpenseId(null);
+      Alert.alert("Success", "Expense moved to group!");
+    },
     onError: (err) => Alert.alert("Error", getErrorMessage(err)),
   });
 
@@ -50,6 +71,30 @@ export function ExpensesScreen() {
   };
 
   const allItems = data?.items ?? [];
+
+  const showActions = (expense: { id: string; category: string; amount: number }) => {
+    Alert.alert(
+      `${expense.category} · ₹${expense.amount.toFixed(2)}`,
+      "Choose an action",
+      [
+        { text: "Edit", onPress: () => {
+          const item = allItems.find((i) => i.id === expense.id);
+          if (item) {
+            navigation.navigate("EditExpense", {
+              expenseId: item.id,
+              amount: item.amount,
+              category: item.category,
+              expenseDate: item.expenseDate,
+              notes: item.notes,
+            });
+          }
+        }},
+        { text: "Move to Group", onPress: () => setMoveExpenseId(expense.id) },
+        { text: "Delete", style: "destructive", onPress: () => confirmDelete(expense.id) },
+        { text: "Cancel", style: "cancel" },
+      ],
+    );
+  };
 
   const filtered = useMemo(() => {
     return allItems.filter((item) => {
@@ -67,6 +112,8 @@ export function ExpensesScreen() {
   if (isLoading) return <LoadingState />;
   if (isError) return <ErrorState message="Failed to load expenses" onRetry={refetch} />;
 
+  const groups = groupsQuery.data ?? [];
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.headerRow}>
@@ -76,6 +123,26 @@ export function ExpensesScreen() {
           onPress={() => navigation.navigate("AddExpense")}
         >
           <Ionicons name="add" size={28} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.topActions}>
+        <TouchableOpacity
+          style={[styles.exportBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          onPress={async () => {
+            try {
+              const res = await expenseService.exportCsv();
+              const csv = await res.data.text();
+              const fileUri = ((FileSystem as any).documentDirectory ?? "") + "expenses.csv";
+              await FileSystem.writeAsStringAsync(fileUri, csv, { encoding: FileSystem.EncodingType.UTF8 });
+              await Sharing.shareAsync(fileUri, { mimeType: "text/csv", dialogTitle: "Export expenses" });
+            } catch (err) {
+              Alert.alert("Export failed", getErrorMessage(err));
+            }
+          }}
+        >
+          <Ionicons name="download-outline" size={16} color={colors.primary} />
+          <Text style={[styles.exportText, { color: colors.primary }]}>Export CSV</Text>
         </TouchableOpacity>
       </View>
 
@@ -140,7 +207,7 @@ export function ExpensesScreen() {
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
             <Card>
-              <View style={styles.row}>
+              <TouchableOpacity style={styles.row} onLongPress={() => showActions(item)} activeOpacity={0.7}>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.category, { color: colors.text }]}>{item.category}</Text>
                   <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
@@ -163,14 +230,49 @@ export function ExpensesScreen() {
                 >
                   <Ionicons name="pencil-outline" size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => confirmDelete(item.id)}>
-                  <Ionicons name="trash-outline" size={20} color={colors.error} />
+                <TouchableOpacity onPress={() => showActions(item)}>
+                  <Ionicons name="ellipsis-vertical" size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
             </Card>
           )}
         />
       )}
+
+      {/* Move to Group Modal */}
+      <Modal visible={!!moveExpenseId} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Move to Group</Text>
+            <Text style={{ color: colors.textSecondary, marginBottom: spacing.md }}>
+              Select a group to share this expense with all members (equal split).
+            </Text>
+            {groups.length === 0 ? (
+              <Text style={{ color: colors.textSecondary, textAlign: "center", paddingVertical: spacing.md }}>
+                No groups found. Create a group first.
+              </Text>
+            ) : (
+              groups.map((g) => (
+                <TouchableOpacity
+                  key={g.id}
+                  style={[styles.groupOption, { borderColor: colors.border }]}
+                  onPress={() => moveExpenseId && moveMutation.mutate({ expenseId: moveExpenseId, groupId: g.id })}
+                >
+                  <Ionicons name="people-outline" size={20} color={colors.primary} />
+                  <Text style={[styles.groupName, { color: colors.text }]}>{g.name}</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
+              ))
+            )}
+            <TouchableOpacity
+              style={[styles.cancelBtn, { borderColor: colors.border }]}
+              onPress={() => setMoveExpenseId(null)}
+            >
+              <Text style={{ color: colors.textSecondary, fontWeight: "600" }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -179,6 +281,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: spacing.md },
   headerRow: { flexDirection: "row", alignItems: "flex-start" },
   fab: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", marginTop: spacing.sm },
+  topActions: { flexDirection: "row", justifyContent: "flex-end", marginBottom: spacing.sm },
+  exportBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1 },
+  exportText: { fontSize: 13, fontWeight: "600" },
   searchBar: {
     flexDirection: "row", alignItems: "center", gap: 8,
     borderWidth: 1, borderRadius: 10,
@@ -195,4 +300,18 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   category: { fontSize: 16, fontWeight: "600" },
   amount: { fontSize: 16, fontWeight: "700" },
+
+  // Modal
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
+  modalContent: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: spacing.md, paddingBottom: spacing.xl },
+  modalTitle: { fontSize: 18, fontWeight: "700", marginBottom: 4 },
+  groupOption: {
+    flexDirection: "row", alignItems: "center", gap: spacing.sm,
+    paddingVertical: 14, borderBottomWidth: 1,
+  },
+  groupName: { flex: 1, fontSize: 15, fontWeight: "600" },
+  cancelBtn: {
+    alignItems: "center", paddingVertical: 14,
+    marginTop: spacing.sm, borderRadius: 12, borderWidth: 1,
+  },
 });

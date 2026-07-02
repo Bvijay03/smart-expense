@@ -30,7 +30,8 @@ export function GroupDetailScreen({ route, navigation }: Props) {
   const { groupId, groupName } = route.params;
   const { colors } = useTheme();
   const queryClient = useQueryClient();
-  const [quickName, setQuickName] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
 
   const group = useQuery({
     queryKey: ["group", groupId],
@@ -43,10 +44,13 @@ export function GroupDetailScreen({ route, navigation }: Props) {
   });
 
   const addMember = useMutation({
-    mutationFn: (name: string) => groupService.addMember(groupId, name),
+    mutationFn: ({ name, email }: { name: string; email?: string }) =>
+      groupService.addMember(groupId, name, email),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["group", groupId] });
-      setQuickName("");
+      setInviteName("");
+      setInviteEmail("");
+      Alert.alert("Success", "Friend invited to the group");
     },
     onError: (err) => Alert.alert("Error", getErrorMessage(err)),
   });
@@ -131,49 +135,140 @@ export function GroupDetailScreen({ route, navigation }: Props) {
         </View>
       </View>
 
-      {/* ── Member avatars ── */}
+      {/* ── Member cards ── */}
       <Text style={[styles.sectionTitle, { color: colors.text }]}>
         Members ({members.length})
       </Text>
-      <View style={styles.memberGrid}>
-        {group.data?.members?.map((m) => (
-          <View key={m.id} style={[styles.memberCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <View style={[styles.memberAvatar, { backgroundColor: colors.primary + "22" }]}>
-              <Text style={[styles.memberAvatarText, { color: colors.primary }]}>
-                {m.user.name.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <Text style={[styles.memberName, { color: colors.text }]} numberOfLines={1}>
-              {m.user.name}
-            </Text>
-            <Text style={[styles.memberRole, { color: m.role === "ADMIN" ? colors.primary : colors.textSecondary }]}>
-              {m.role === "ADMIN" ? "Admin" : "Member"}
-            </Text>
-          </View>
-        ))}
+      <View style={styles.memberList}>
+        {group.data?.members?.map((m) => {
+          const bal = m.balance ?? { paid: 0, owed: 0, net: 0 };
+          const owesTo = m.owesTo ?? [];
+          const getsFrom = m.getsFrom ?? [];
+          const isNeutral = owesTo.length === 0 && getsFrom.length === 0;
+
+          return (
+            <Card key={m.id}>
+              {/* Top row: Avatar + Name/Role + Paid/Owed */}
+              <View style={styles.memberCardInner}>
+                {/* Left: Avatar */}
+                <View style={[styles.memberAvatar, { backgroundColor: colors.primary + "22" }]}>
+                  <Text style={[styles.memberAvatarText, { color: colors.primary }]}>
+                    {m.user.name.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+
+                {/* Center: Name + role */}
+                <View style={styles.memberInfo}>
+                  <View style={styles.memberNameRow}>
+                    <Text style={[styles.memberName, { color: colors.text }]} numberOfLines={1}>
+                      {m.user.name}
+                    </Text>
+                    <View style={[
+                      styles.roleBadge,
+                      { backgroundColor: m.role === "ADMIN" ? colors.primary + "20" : colors.border },
+                    ]}>
+                      <Text style={[
+                        styles.roleBadgeText,
+                        { color: m.role === "ADMIN" ? colors.primary : colors.textSecondary },
+                      ]}>
+                        {m.role === "ADMIN" ? "Admin" : "Member"}
+                      </Text>
+                    </View>
+                  </View>
+                  {isNeutral && (
+                    <View style={styles.memberNetRow}>
+                      <Ionicons name="checkmark-circle" size={14} color={colors.textSecondary} />
+                      <Text style={[styles.memberNetText, { color: colors.textSecondary }]}>
+                        All settled up
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Right: Paid / Owed stats */}
+                <View style={styles.memberStats}>
+                  <View style={styles.memberStatItem}>
+                    <Text style={[styles.memberStatLabel, { color: colors.textSecondary }]}>Paid</Text>
+                    <Text style={[styles.memberStatValue, { color: colors.success }]}>
+                      ₹{bal.paid.toFixed(0)}
+                    </Text>
+                  </View>
+                  <View style={[styles.memberStatDivider, { backgroundColor: colors.border }]} />
+                  <View style={styles.memberStatItem}>
+                    <Text style={[styles.memberStatLabel, { color: colors.textSecondary }]}>Owed</Text>
+                    <Text style={[styles.memberStatValue, { color: colors.error }]}>
+                      ₹{bal.owed.toFixed(0)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Debt breakdown: who they owe */}
+              {owesTo.length > 0 && (
+                <View style={[styles.debtSection, { borderTopColor: colors.border }]}>
+                  {owesTo.map((d) => (
+                    <View key={d.userId} style={styles.debtRow}>
+                      <Ionicons name="arrow-forward-circle" size={16} color={colors.error} />
+                      <Text style={[styles.debtText, { color: colors.text }]}>
+                        Owes <Text style={{ fontWeight: "700", color: colors.error }}>₹{d.amount.toFixed(2)}</Text> to{" "}
+                        <Text style={{ fontWeight: "700" }}>{d.name}</Text>
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Debt breakdown: who owes them */}
+              {getsFrom.length > 0 && (
+                <View style={[!owesTo.length && styles.debtSection, owesTo.length > 0 && styles.debtSubSection, { borderTopColor: colors.border }]}>
+                  {getsFrom.map((d) => (
+                    <View key={d.userId} style={styles.debtRow}>
+                      <Ionicons name="arrow-back-circle" size={16} color={colors.success} />
+                      <Text style={[styles.debtText, { color: colors.text }]}>
+                        Gets <Text style={{ fontWeight: "700", color: colors.success }}>₹{d.amount.toFixed(2)}</Text> from{" "}
+                        <Text style={{ fontWeight: "700" }}>{d.name}</Text>
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </Card>
+          );
+        })}
       </View>
 
-      {/* Quick add member */}
-      <View style={[styles.quickAdd, { borderColor: colors.border }]}>
-        <Ionicons name="person-add-outline" size={18} color={colors.textSecondary} />
+{/* Invite friend */}
+      <Card>
+        <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: spacing.sm }]}>Invite Friend</Text>
         <TextInput
-          style={[styles.quickAddInput, { color: colors.text }]}
-          placeholder="Add member by name..."
+          style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }]}
+          placeholder="Friend name"
           placeholderTextColor={colors.textSecondary}
-          value={quickName}
-          onChangeText={setQuickName}
-          returnKeyType="done"
-          onSubmitEditing={() => quickName.trim() && addMember.mutate(quickName.trim())}
+          value={inviteName}
+          onChangeText={setInviteName}
         />
-        {quickName.trim() ? (
-          <TouchableOpacity
-            style={[styles.quickAddBtn, { backgroundColor: colors.primary }]}
-            onPress={() => quickName.trim() && addMember.mutate(quickName.trim())}
-          >
-            <Ionicons name="add" size={18} color="#fff" />
-          </TouchableOpacity>
-        ) : null}
-      </View>
+        <TextInput
+          style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface, marginTop: spacing.sm }]}
+          placeholder="Email (optional)"
+          placeholderTextColor={colors.textSecondary}
+          value={inviteEmail}
+          onChangeText={setInviteEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+        <Button
+          title="Invite to Group"
+          variant="secondary"
+          onPress={() => {
+            if (!inviteName.trim()) {
+              Alert.alert("Missing name", "Please enter a name for the friend");
+              return;
+            }
+            addMember.mutate({ name: inviteName.trim(), email: inviteEmail.trim() || undefined });
+          }}
+          loading={addMember.isPending}
+        />
+      </Card>
 
       {/* ── Actions ── */}
       <Text style={[styles.sectionTitle, { color: colors.text, marginTop: spacing.md }]}>Actions</Text>
@@ -279,25 +374,36 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: "600", marginBottom: spacing.sm },
 
   // Members
-  memberGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginBottom: spacing.sm },
-  memberCard: {
-    alignItems: "center", paddingVertical: 12, paddingHorizontal: 10,
-    borderRadius: 12, borderWidth: 1, minWidth: 80, flex: 1, maxWidth: "30%",
-  },
-  memberAvatar: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 6 },
-  memberAvatarText: { fontSize: 18, fontWeight: "700" },
-  memberName: { fontSize: 13, fontWeight: "600", textAlign: "center" },
-  memberRole: { fontSize: 11, marginTop: 2 },
+  memberList: { gap: spacing.sm, marginBottom: spacing.sm },
+  memberCardInner: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  memberAvatar: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  memberAvatarText: { fontSize: 20, fontWeight: "700" },
+  memberInfo: { flex: 1 },
+  memberNameRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
+  memberName: { fontSize: 15, fontWeight: "700" },
+  roleBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+  roleBadgeText: { fontSize: 10, fontWeight: "600" },
+  memberNetRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  memberNetText: { fontSize: 12, fontWeight: "600" },
+  memberStats: { flexDirection: "row", alignItems: "center" },
+  memberStatItem: { alignItems: "center", paddingHorizontal: 8 },
+  memberStatLabel: { fontSize: 10, fontWeight: "500", marginBottom: 2 },
+  memberStatValue: { fontSize: 14, fontWeight: "700" },
+  memberStatDivider: { width: 1, height: 28 },
 
-  // Quick add
-  quickAdd: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    borderWidth: 1, borderRadius: 10, borderStyle: "dashed",
-    paddingHorizontal: 12, paddingVertical: 10,
-    marginBottom: spacing.sm,
+  // Debt breakdown
+  debtSection: { borderTopWidth: 1, marginTop: spacing.sm, paddingTop: spacing.sm },
+  debtSubSection: { marginTop: 4 },
+  debtRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
+  debtText: { fontSize: 13 },
+
+  input: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
   },
-  quickAddInput: { flex: 1, fontSize: 14 },
-  quickAddBtn: { width: 30, height: 30, borderRadius: 8, alignItems: "center", justifyContent: "center" },
 
   // Actions
   actionGrid: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },

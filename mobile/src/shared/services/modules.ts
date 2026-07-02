@@ -25,6 +25,15 @@ export const expenseService = {
   delete(id: string) {
     return api.delete(`/expenses/${id}`);
   },
+  moveToGroup(id: string, groupId: string, description?: string) {
+    return api.post(`/expenses/${id}/move-to-group`, { groupId, description });
+  },
+  exportCsv(groupId?: string) {
+    return api.get("/expenses/export", {
+      responseType: "text",
+      params: groupId ? { groupId } : undefined,
+    });
+  },
 };
 
 export const groupService = {
@@ -114,6 +123,9 @@ export const analyticsService = {
   trends(params?: Record<string, unknown>) {
     return api.get("/analytics/trends", { params });
   },
+  exportCsv(params?: Record<string, unknown>) {
+    return api.get("/analytics/export", { params, responseType: "text" });
+  },
 };
 
 export const notificationService = {
@@ -125,5 +137,35 @@ export const notificationService = {
   },
   markAllRead() {
     return api.patch("/notifications/read-all");
+  },
+};
+
+export const categoryService = {
+  list() {
+    return api.get<{ data: { id: string; name: string; icon: string; color: string; isDefault: boolean }[] }>("/categories");
+  },
+  create(data: { name: string; icon?: string; color?: string }) {
+    return api.post("/categories", data);
+  },
+  delete(id: string) {
+    return api.delete(`/categories/${id}`);
+  },
+};
+
+export const recurringService = {
+  list() {
+    return api.get<{ data: any[] }>("/recurring");
+  },
+  create(data: Record<string, unknown>) {
+    return api.post("/recurring", data);
+  },
+  update(id: string, data: Record<string, unknown>) {
+    return api.patch(`/recurring/${id}`, data);
+  },
+  delete(id: string) {
+    return api.delete(`/recurring/${id}`);
+  },
+  toggleActive(id: string) {
+    return api.patch(`/recurring/${id}/toggle`);
   },
 };
