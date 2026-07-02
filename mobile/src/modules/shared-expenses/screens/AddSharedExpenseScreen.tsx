@@ -10,12 +10,12 @@ import {
   View,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Ionicons } from "@expo/vector-icons";
-import { sharedExpenseService } from "@/shared/services/modules";
+import { sharedExpenseService, categoryService } from "@/shared/services/modules";
 import { Input } from "@/shared/components/Input";
 import { Button } from "@/shared/components/Button";
 import { ScreenHeader } from "@/shared/components/Card";
@@ -29,7 +29,7 @@ import { useAuthStore } from "@/modules/authentication/store/authStore";
 const schema = z.object({
   description: z.string().min(1),
   amount: z.string().min(1),
-  category: z.enum(EXPENSE_CATEGORIES),
+  category: z.string().min(1),
   expenseDate: z.string().min(1),
 });
 
@@ -42,6 +42,13 @@ export function AddSharedExpenseScreen({ route, navigation }: Props) {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const [splitType, setSplitType] = useState<"EQUAL" | "EXACT" | "PERCENTAGE">("EQUAL");
+
+  const categoriesQuery = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => categoryService.list().then((r) => r.data.data),
+  });
+
+  const categories = categoriesQuery.data?.map((c) => c.name) ?? EXPENSE_CATEGORIES;
   const [paidById, setPaidById] = useState(user?.id ?? members[0]?.id);
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(
     new Set(members.map((m) => m.id))
@@ -229,7 +236,7 @@ export function AddSharedExpenseScreen({ route, navigation }: Props) {
 
         <Text style={[styles.label, { color: colors.text }]}>Category</Text>
         <View style={styles.chips}>
-          {EXPENSE_CATEGORIES.slice(0, 5).map((cat) => (
+          {categories.map((cat) => (
             <TouchableOpacity
               key={cat}
               style={[styles.chip, { backgroundColor: category === cat ? colors.primary : colors.surface, borderColor: colors.border }]}

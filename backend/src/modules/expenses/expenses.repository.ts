@@ -53,6 +53,21 @@ export const expensesRepository = {
     ]);
   },
 
+  findAllForExport(userId: string) {
+    return prisma.expense.findMany({
+      where: { userId, deletedAt: null },
+      orderBy: { expenseDate: "desc" },
+      select: {
+        id: true,
+        amount: true,
+        category: true,
+        expenseDate: true,
+        notes: true,
+        createdAt: true,
+      },
+    });
+  },
+
   update(
     id: string,
     data: Partial<{

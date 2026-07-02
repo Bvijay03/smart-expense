@@ -10,11 +10,11 @@ import {
   View,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { budgetService } from "@/shared/services/modules";
+import { budgetService, categoryService } from "@/shared/services/modules";
 import { Input } from "@/shared/components/Input";
 import { Button } from "@/shared/components/Button";
 import { ScreenHeader } from "@/shared/components/Card";
@@ -38,6 +38,13 @@ export function AddBudgetScreen() {
   const now = new Date();
   const [category, setCategory] = useState<string>("ALL");
   const [loading, setLoading] = useState(false);
+
+  const categoriesQuery = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => categoryService.list().then((r) => r.data.data),
+  });
+
+  const categories = ["ALL", ...(categoriesQuery.data?.map((c) => c.name) ?? EXPENSE_CATEGORIES)];
 
   const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -69,8 +76,6 @@ export function AddBudgetScreen() {
       { onSettled: () => setLoading(false) },
     );
   };
-
-  const categories = ["ALL", ...EXPENSE_CATEGORIES];
 
   return (
     <KeyboardAvoidingView

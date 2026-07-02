@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import {
   Alert,
   FlatList,
@@ -121,6 +123,26 @@ export function ExpensesScreen() {
           onPress={() => navigation.navigate("AddExpense")}
         >
           <Ionicons name="add" size={28} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.topActions}>
+        <TouchableOpacity
+          style={[styles.exportBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          onPress={async () => {
+            try {
+              const res = await expenseService.exportCsv();
+              const csv = await res.data.text();
+              const fileUri = ((FileSystem as any).documentDirectory ?? "") + "expenses.csv";
+              await FileSystem.writeAsStringAsync(fileUri, csv, { encoding: FileSystem.EncodingType.UTF8 });
+              await Sharing.shareAsync(fileUri, { mimeType: "text/csv", dialogTitle: "Export expenses" });
+            } catch (err) {
+              Alert.alert("Export failed", getErrorMessage(err));
+            }
+          }}
+        >
+          <Ionicons name="download-outline" size={16} color={colors.primary} />
+          <Text style={[styles.exportText, { color: colors.primary }]}>Export CSV</Text>
         </TouchableOpacity>
       </View>
 
@@ -259,6 +281,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: spacing.md },
   headerRow: { flexDirection: "row", alignItems: "flex-start" },
   fab: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", marginTop: spacing.sm },
+  topActions: { flexDirection: "row", justifyContent: "flex-end", marginBottom: spacing.sm },
+  exportBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1 },
+  exportText: { fontSize: 13, fontWeight: "600" },
   searchBar: {
     flexDirection: "row", alignItems: "center", gap: 8,
     borderWidth: 1, borderRadius: 10,

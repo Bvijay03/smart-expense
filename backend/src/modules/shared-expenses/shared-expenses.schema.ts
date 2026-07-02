@@ -9,7 +9,7 @@ const splitEntrySchema = z.object({
 export const createSharedExpenseSchema = z.object({
   description: z.string().min(1).max(200),
   amount: z.coerce.number().positive(),
-  category: z.enum(EXPENSE_CATEGORIES),
+  category: z.string().min(1).max(50),
   expenseDate: z.coerce.date(),
   paidById: z.uuid(),
   splitType: z.enum(["EQUAL", "EXACT", "PERCENTAGE"]),

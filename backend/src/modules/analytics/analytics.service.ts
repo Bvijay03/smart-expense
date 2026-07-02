@@ -90,4 +90,21 @@ export const analyticsService = {
 
     return { year, months };
   },
+
+  async exportCsv(userId: string, query: unknown) {
+    const byCategory = await this.byCategory(userId, query);
+
+    const header = ["category", "total"];
+    const rows = byCategory.map((c: { category: string; total: number }) => [
+      c.category,
+      decimalToNumber(c.total ?? 0),
+    ]);
+
+    const escapeCsv = (value: string | number) => {
+      const stringValue = String(value ?? "");
+      return /[",\n]/.test(stringValue) ? `"${stringValue.replace(/"/g, '""')}"` : stringValue;
+    };
+
+    return [header.join(","), ...rows.map((r) => r.map(escapeCsv).join(","))].join("\n");
+  },
 };

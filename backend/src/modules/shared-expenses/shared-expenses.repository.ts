@@ -76,6 +76,22 @@ export const sharedExpensesRepository = {
     });
   },
 
+  findAllForExport(groupId: string) {
+    return prisma.sharedExpense.findMany({
+      where: { groupId, deletedAt: null },
+      include: {
+        group: { select: { id: true, name: true } },
+        paidBy: { select: { id: true, name: true, email: true } },
+        splits: {
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
+      },
+      orderBy: { expenseDate: "desc" },
+    });
+  },
+
   softDelete(id: string) {
     return prisma.sharedExpense.update({
       where: { id },

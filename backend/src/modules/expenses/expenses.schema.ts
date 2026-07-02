@@ -17,6 +17,10 @@ export const expenseQuerySchema = z.object({
   endDate: z.coerce.date().optional(),
 });
 
+export const exportCsvQuerySchema = z.object({
+  groupId: z.string().uuid().optional(),
+});
+
 export const expenseIdSchema = z.object({
   id: z.uuid(),
 });
