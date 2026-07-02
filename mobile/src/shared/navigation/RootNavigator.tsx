@@ -20,6 +20,8 @@ import { MainTabs } from "./MainTabs";
 import { useThemeStore } from "@/shared/hooks/useTheme";
 import { AuthStackParamList, RootStackParamList } from "./types";
 import { GroupExpensesScreen } from "@/modules/groups/screens/GroupExpensesScreen";
+import { CategoriesScreen } from "@/modules/categories/screens/CategoriesScreen";
+import { RecurringScreen } from "@/modules/recurring/screens/RecurringScreen";
 
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -67,6 +69,8 @@ function AppNavigator() {
       <RootStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: "Notifications" }} />
       <RootStack.Screen name="Profile" component={ProfileScreen} options={{ title: "Profile" }} />
       <RootStack.Screen name="GroupExpenses" component={GroupExpensesScreen} options={{ headerShown: false }} />
+      <RootStack.Screen name="Categories" component={CategoriesScreen} options={{ title: "Categories" }} />
+      <RootStack.Screen name="Recurring" component={RecurringScreen} options={{ title: "Recurring" }} />
     </RootStack.Navigator>
 
   );

@@ -25,4 +25,6 @@ export type RootStackParamList = {
   Notifications: undefined;
   Profile: undefined;
   GroupExpenses: { groupId: string; groupName: string };
+  Categories: undefined;
+  Recurring: undefined;
 };

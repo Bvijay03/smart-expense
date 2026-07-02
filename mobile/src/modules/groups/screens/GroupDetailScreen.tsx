@@ -131,26 +131,106 @@ export function GroupDetailScreen({ route, navigation }: Props) {
         </View>
       </View>
 
-      {/* ── Member avatars ── */}
+      {/* ── Member cards ── */}
       <Text style={[styles.sectionTitle, { color: colors.text }]}>
         Members ({members.length})
       </Text>
-      <View style={styles.memberGrid}>
-        {group.data?.members?.map((m) => (
-          <View key={m.id} style={[styles.memberCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <View style={[styles.memberAvatar, { backgroundColor: colors.primary + "22" }]}>
-              <Text style={[styles.memberAvatarText, { color: colors.primary }]}>
-                {m.user.name.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <Text style={[styles.memberName, { color: colors.text }]} numberOfLines={1}>
-              {m.user.name}
-            </Text>
-            <Text style={[styles.memberRole, { color: m.role === "ADMIN" ? colors.primary : colors.textSecondary }]}>
-              {m.role === "ADMIN" ? "Admin" : "Member"}
-            </Text>
-          </View>
-        ))}
+      <View style={styles.memberList}>
+        {group.data?.members?.map((m) => {
+          const bal = m.balance ?? { paid: 0, owed: 0, net: 0 };
+          const owesTo = m.owesTo ?? [];
+          const getsFrom = m.getsFrom ?? [];
+          const isNeutral = owesTo.length === 0 && getsFrom.length === 0;
+
+          return (
+            <Card key={m.id}>
+              {/* Top row: Avatar + Name/Role + Paid/Owed */}
+              <View style={styles.memberCardInner}>
+                {/* Left: Avatar */}
+                <View style={[styles.memberAvatar, { backgroundColor: colors.primary + "22" }]}>
+                  <Text style={[styles.memberAvatarText, { color: colors.primary }]}>
+                    {m.user.name.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+
+                {/* Center: Name + role */}
+                <View style={styles.memberInfo}>
+                  <View style={styles.memberNameRow}>
+                    <Text style={[styles.memberName, { color: colors.text }]} numberOfLines={1}>
+                      {m.user.name}
+                    </Text>
+                    <View style={[
+                      styles.roleBadge,
+                      { backgroundColor: m.role === "ADMIN" ? colors.primary + "20" : colors.border },
+                    ]}>
+                      <Text style={[
+                        styles.roleBadgeText,
+                        { color: m.role === "ADMIN" ? colors.primary : colors.textSecondary },
+                      ]}>
+                        {m.role === "ADMIN" ? "Admin" : "Member"}
+                      </Text>
+                    </View>
+                  </View>
+                  {isNeutral && (
+                    <View style={styles.memberNetRow}>
+                      <Ionicons name="checkmark-circle" size={14} color={colors.textSecondary} />
+                      <Text style={[styles.memberNetText, { color: colors.textSecondary }]}>
+                        All settled up
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Right: Paid / Owed stats */}
+                <View style={styles.memberStats}>
+                  <View style={styles.memberStatItem}>
+                    <Text style={[styles.memberStatLabel, { color: colors.textSecondary }]}>Paid</Text>
+                    <Text style={[styles.memberStatValue, { color: colors.success }]}>
+                      ₹{bal.paid.toFixed(0)}
+                    </Text>
+                  </View>
+                  <View style={[styles.memberStatDivider, { backgroundColor: colors.border }]} />
+                  <View style={styles.memberStatItem}>
+                    <Text style={[styles.memberStatLabel, { color: colors.textSecondary }]}>Owed</Text>
+                    <Text style={[styles.memberStatValue, { color: colors.error }]}>
+                      ₹{bal.owed.toFixed(0)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Debt breakdown: who they owe */}
+              {owesTo.length > 0 && (
+                <View style={[styles.debtSection, { borderTopColor: colors.border }]}>
+                  {owesTo.map((d) => (
+                    <View key={d.userId} style={styles.debtRow}>
+                      <Ionicons name="arrow-forward-circle" size={16} color={colors.error} />
+                      <Text style={[styles.debtText, { color: colors.text }]}>
+                        Owes <Text style={{ fontWeight: "700", color: colors.error }}>₹{d.amount.toFixed(2)}</Text> to{" "}
+                        <Text style={{ fontWeight: "700" }}>{d.name}</Text>
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Debt breakdown: who owes them */}
+              {getsFrom.length > 0 && (
+                <View style={[!owesTo.length && styles.debtSection, owesTo.length > 0 && styles.debtSubSection, { borderTopColor: colors.border }]}>
+                  {getsFrom.map((d) => (
+                    <View key={d.userId} style={styles.debtRow}>
+                      <Ionicons name="arrow-back-circle" size={16} color={colors.success} />
+                      <Text style={[styles.debtText, { color: colors.text }]}>
+                        Gets <Text style={{ fontWeight: "700", color: colors.success }}>₹{d.amount.toFixed(2)}</Text> from{" "}
+                        <Text style={{ fontWeight: "700" }}>{d.name}</Text>
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </Card>
+          );
+        })}
       </View>
 
       {/* Quick add member */}
@@ -279,15 +359,28 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: "600", marginBottom: spacing.sm },
 
   // Members
-  memberGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginBottom: spacing.sm },
-  memberCard: {
-    alignItems: "center", paddingVertical: 12, paddingHorizontal: 10,
-    borderRadius: 12, borderWidth: 1, minWidth: 80, flex: 1, maxWidth: "30%",
-  },
-  memberAvatar: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 6 },
-  memberAvatarText: { fontSize: 18, fontWeight: "700" },
-  memberName: { fontSize: 13, fontWeight: "600", textAlign: "center" },
-  memberRole: { fontSize: 11, marginTop: 2 },
+  memberList: { gap: spacing.sm, marginBottom: spacing.sm },
+  memberCardInner: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  memberAvatar: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  memberAvatarText: { fontSize: 20, fontWeight: "700" },
+  memberInfo: { flex: 1 },
+  memberNameRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
+  memberName: { fontSize: 15, fontWeight: "700" },
+  roleBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+  roleBadgeText: { fontSize: 10, fontWeight: "600" },
+  memberNetRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  memberNetText: { fontSize: 12, fontWeight: "600" },
+  memberStats: { flexDirection: "row", alignItems: "center" },
+  memberStatItem: { alignItems: "center", paddingHorizontal: 8 },
+  memberStatLabel: { fontSize: 10, fontWeight: "500", marginBottom: 2 },
+  memberStatValue: { fontSize: 14, fontWeight: "700" },
+  memberStatDivider: { width: 1, height: 28 },
+
+  // Debt breakdown
+  debtSection: { borderTopWidth: 1, marginTop: spacing.sm, paddingTop: spacing.sm },
+  debtSubSection: { marginTop: 4 },
+  debtRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
+  debtText: { fontSize: 13 },
 
   // Quick add
   quickAdd: {

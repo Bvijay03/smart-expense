@@ -106,4 +106,33 @@ export const expensesRepository = {
       _sum: { amount: true },
     });
   },
+
+  countForPeriod(userId: string, startDate: Date, endDate: Date) {
+    return prisma.expense.count({
+      where: {
+        userId,
+        deletedAt: null,
+        expenseDate: { gte: startDate, lte: endDate },
+      },
+    });
+  },
+
+  async topCategoryForPeriod(userId: string, startDate: Date, endDate: Date) {
+    const result = await prisma.expense.groupBy({
+      by: ["category"],
+      where: {
+        userId,
+        deletedAt: null,
+        expenseDate: { gte: startDate, lte: endDate },
+      },
+      _sum: { amount: true },
+      orderBy: { _sum: { amount: "desc" } },
+      take: 1,
+    });
+    if (result.length === 0) return null;
+    return {
+      category: result[0].category,
+      total: result[0]._sum.amount,
+    };
+  },
 };

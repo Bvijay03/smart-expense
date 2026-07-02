@@ -10,11 +10,11 @@ import {
   View,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { expenseService } from "@/shared/services/modules";
+import { expenseService, categoryService } from "@/shared/services/modules";
 import { Input } from "@/shared/components/Input";
 import { Button } from "@/shared/components/Button";
 import { ScreenHeader } from "@/shared/components/Card";
@@ -25,7 +25,7 @@ import { spacing } from "@/shared/theme";
 
 const schema = z.object({
   amount: z.string().min(1, "Amount is required"),
-  category: z.enum(EXPENSE_CATEGORIES),
+  category: z.string().min(1, "Category is required"),
   expenseDate: z.string().min(1),
   notes: z.string().optional(),
 });
@@ -37,6 +37,13 @@ export function AddExpenseScreen() {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
+
+  const categoriesQuery = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => categoryService.list().then((r) => r.data.data),
+  });
+
+  const categories = categoriesQuery.data?.map((c) => c.name) ?? [...EXPENSE_CATEGORIES];
 
   const { control, handleSubmit, setValue, watch, formState: { errors } } =
     useForm<FormData>({
@@ -98,7 +105,7 @@ export function AddExpenseScreen() {
 
         <Text style={[styles.label, { color: colors.text }]}>Category</Text>
         <View style={styles.chips}>
-          {EXPENSE_CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <TouchableOpacity
               key={cat}
               style={[

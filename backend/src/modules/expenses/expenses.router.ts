@@ -11,6 +11,7 @@ import {
   expenseIdSchema,
   expenseQuerySchema,
   updateExpenseSchema,
+  moveToGroupSchema,
 } from "./expenses.schema";
 
 const router = Router();
@@ -33,6 +34,12 @@ router.delete(
   "/:id",
   validateParams(expenseIdSchema),
   expensesController.delete,
+);
+router.post(
+  "/:id/move-to-group",
+  validateParams(expenseIdSchema),
+  validateBody(moveToGroupSchema),
+  expensesController.moveToGroup,
 );
 
 export default router;

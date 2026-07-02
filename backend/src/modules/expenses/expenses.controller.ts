@@ -58,4 +58,17 @@ export const expensesController = {
       next(err);
     }
   },
+
+  async moveToGroup(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const result = await expensesService.moveToGroup(
+        req.user!.userId,
+        paramId(req, "id"),
+        req.body,
+      );
+      res.json({ data: result });
+    } catch (err) {
+      next(err);
+    }
+  },
 };

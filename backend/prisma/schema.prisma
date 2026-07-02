@@ -50,6 +50,8 @@ model User {
   settlementsTo    Settlement[]    @relation("SettlementTo")
   budgets          Budget[]
   notifications    Notification[]
+  categories       Category[]
+  recurringExpenses RecurringExpense[]
 
   @@index([email])
   @@map("users")
@@ -201,4 +203,35 @@ model Notification {
 
   @@index([userId, read])
   @@map("notifications")
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  icon      String   @default("pricetag-outline")
+  color     String   @default("#4F46E5")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, name])
+  @@map("categories")
+}
+
+model RecurringExpense {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  amount      Decimal   @db.Decimal(12, 2)
+  category    String
+  notes       String?
+  dayOfMonth  Int       @map("day_of_month")
+  isActive    Boolean   @default(true) @map("is_active")
+  lastCreated DateTime? @map("last_created")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("recurring_expenses")
 }

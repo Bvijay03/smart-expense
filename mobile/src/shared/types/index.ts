@@ -31,6 +31,8 @@ export interface Group {
   updatedAt: string;
   members?: GroupMember[];
   expenseCount?: number;
+  userContribution?: number;
+  userNetBalance?: number;
 }
 
 export interface GroupMember {
@@ -38,6 +40,13 @@ export interface GroupMember {
   role: string;
   joinedAt: string;
   user: Pick<User, "id" | "name" | "email" | "avatarUrl">;
+  balance?: {
+    paid: number;
+    owed: number;
+    net: number;
+  };
+  owesTo?: { userId: string; name: string; amount: number }[];
+  getsFrom?: { userId: string; name: string; amount: number }[];
 }
 
 export interface SharedExpense {
