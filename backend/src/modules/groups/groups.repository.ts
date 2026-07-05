@@ -168,4 +168,71 @@ export const groupsRepository = {
       where: { groupId_userId: { groupId, userId } },
     });
   },
+
+  setInviteCode(groupId: string, code: string, expiresAt: Date) {
+    return prisma.group.update({
+      where: { id: groupId },
+      data: { inviteCode: code, inviteCodeExp: expiresAt },
+    });
+  },
+
+  findByInviteCode(code: string) {
+    return prisma.group.findUnique({
+      where: { inviteCode: code },
+    });
+  },
+
+  createJoinRequest(groupId: string, userId: string) {
+    return prisma.joinRequest.create({
+      data: { groupId, userId },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        group: { select: { id: true, name: true } },
+      },
+    });
+  },
+
+  findJoinRequest(requestId: string) {
+    return prisma.joinRequest.findUnique({
+      where: { id: requestId },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        group: { select: { id: true, name: true } },
+      },
+    });
+  },
+
+  findPendingRequests(groupId: string) {
+    return prisma.joinRequest.findMany({
+      where: { groupId, status: "PENDING" },
+      include: {
+        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
+  updateJoinRequestStatus(requestId: string, status: "APPROVED" | "REJECTED") {
+    return prisma.joinRequest.update({
+      where: { id: requestId },
+      data: { status },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        group: { select: { id: true, name: true } },
+      },
+    });
+  },
+
+  findExistingJoinRequest(groupId: string, userId: string) {
+    return prisma.joinRequest.findUnique({
+      where: { groupId_userId: { groupId, userId } },
+    });
+  },
+
+  getAdmins(groupId: string) {
+    return prisma.groupMember.findMany({
+      where: { groupId, role: GroupRole.ADMIN },
+      select: { userId: true },
+    });
+  },
 };

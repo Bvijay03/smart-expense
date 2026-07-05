@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import * as FileSystem from "expo-file-system";
-import * as Sharing from "expo-sharing";
+
 import {
   Alert,
   FlatList,
@@ -126,25 +125,7 @@ export function ExpensesScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.topActions}>
-        <TouchableOpacity
-          style={[styles.exportBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-          onPress={async () => {
-            try {
-              const res = await expenseService.exportCsv();
-              const csv = await res.data.text();
-              const fileUri = ((FileSystem as any).documentDirectory ?? "") + "expenses.csv";
-              await FileSystem.writeAsStringAsync(fileUri, csv, { encoding: FileSystem.EncodingType.UTF8 });
-              await Sharing.shareAsync(fileUri, { mimeType: "text/csv", dialogTitle: "Export expenses" });
-            } catch (err) {
-              Alert.alert("Export failed", getErrorMessage(err));
-            }
-          }}
-        >
-          <Ionicons name="download-outline" size={16} color={colors.primary} />
-          <Text style={[styles.exportText, { color: colors.primary }]}>Export CSV</Text>
-        </TouchableOpacity>
-      </View>
+
 
       {/* Search bar */}
       <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>

@@ -6,12 +6,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import * as FileSystem from "expo-file-system";
-import * as Sharing from "expo-sharing";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
-import { expenseService, sharedExpenseService } from "@/shared/services/modules";
+import { sharedExpenseService } from "@/shared/services/modules";
 import { Card } from "@/shared/components/Card";
 import { LoadingState } from "@/shared/components/LoadingState";
 import { ErrorState } from "@/shared/components/ErrorState";
@@ -21,6 +19,7 @@ import { spacing } from "@/shared/theme";
 import { RootStackParamList } from "@/shared/navigation/types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "GroupExpenses">;
+
 
 export function GroupExpensesScreen({ route, navigation }: Props) {
   const { groupId, groupName } = route.params;
@@ -67,23 +66,6 @@ export function GroupExpensesScreen({ route, navigation }: Props) {
           <Text style={[styles.headerSub, { color: colors.textSecondary }]}>{groupName}</Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.exportBtn}
-          onPress={async () => {
-            try {
-              const res = await expenseService.exportCsv(groupId);
-              const csv = res.data;
-              const fileName = `group-expenses-${groupName.replace(/\s+/g, "-").toLowerCase()}.csv`;
-              const fileUri = `${(FileSystem as any).documentDirectory ?? ""}${fileName}`;
-              await FileSystem.writeAsStringAsync(fileUri, csv, { encoding: FileSystem.EncodingType.UTF8 });
-              await Sharing.shareAsync(fileUri, { mimeType: "text/csv", dialogTitle: "Export group expenses" });
-            } catch (err) {
-              Alert.alert("Export failed", getErrorMessage(err));
-            }
-          }}
-        >
-          <Ionicons name="download-outline" size={20} color={colors.primary} />
-        </TouchableOpacity>
       </View>
 
       <FlatList

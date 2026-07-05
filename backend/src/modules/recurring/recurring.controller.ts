@@ -26,7 +26,7 @@ export const recurringController = {
   async update(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const input = updateRecurringSchema.parse(req.body);
-      const data = await recurringService.update(req.user!.userId, req.params.id, input);
+      const data = await recurringService.update(req.user!.userId, req.params.id as string, input);
       res.json({ data });
     } catch (err) {
       next(err);
@@ -35,7 +35,7 @@ export const recurringController = {
 
   async toggleActive(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await recurringService.toggleActive(req.user!.userId, req.params.id);
+      const data = await recurringService.toggleActive(req.user!.userId, req.params.id as string);
       res.json({ data });
     } catch (err) {
       next(err);
@@ -44,7 +44,7 @@ export const recurringController = {
 
   async delete(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      await recurringService.delete(req.user!.userId, req.params.id);
+      await recurringService.delete(req.user!.userId, req.params.id as string);
       res.status(204).end();
     } catch (err) {
       next(err);

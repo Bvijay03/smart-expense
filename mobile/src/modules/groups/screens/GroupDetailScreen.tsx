@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   Alert,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,13 +17,13 @@ import {
   sharedExpenseService,
 } from "@/shared/services/modules";
 import { Card } from "@/shared/components/Card";
-import { Button } from "@/shared/components/Button";
 import { LoadingState } from "@/shared/components/LoadingState";
 import { ErrorState } from "@/shared/components/ErrorState";
 import { getErrorMessage } from "@/shared/services/api";
 import { useTheme } from "@/shared/hooks/useTheme";
 import { spacing } from "@/shared/theme";
 import { RootStackParamList } from "@/shared/navigation/types";
+import { useAuthStore } from "@/modules/authentication/store/authStore";
 
 type Props = NativeStackScreenProps<RootStackParamList, "GroupDetail">;
 
@@ -31,6 +32,11 @@ export function GroupDetailScreen({ route, navigation }: Props) {
   const { colors } = useTheme();
   const queryClient = useQueryClient();
   const [quickName, setQuickName] = useState("");
+  const [inviteModalVisible, setInviteModalVisible] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null);
+  const [generatingCode, setGeneratingCode] = useState(false);
+  const currentUserId = useAuthStore((s) => s.user?.id);
 
   const group = useQuery({
     queryKey: ["group", groupId],
@@ -40,6 +46,16 @@ export function GroupDetailScreen({ route, navigation }: Props) {
   const expenses = useQuery({
     queryKey: ["shared-expenses", groupId],
     queryFn: () => sharedExpenseService.list(groupId).then((r) => r.data.data),
+  });
+
+  const joinRequests = useQuery({
+    queryKey: ["join-requests", groupId],
+    queryFn: () => groupService.listJoinRequests(groupId).then((r) => r.data.data),
+    // Enable for any ADMIN member, not just the creator
+    enabled: !!group.data?.members?.some(
+      (m) => m.user.id === currentUserId && m.role === "ADMIN"
+    ),
+    refetchInterval: 15000, // poll every 15s so admin sees new requests
   });
 
   const addMember = useMutation({
@@ -69,6 +85,17 @@ export function GroupDetailScreen({ route, navigation }: Props) {
     onError: (err) => Alert.alert("Error", getErrorMessage(err)),
   });
 
+  const handleJoinRequest = useMutation({
+    mutationFn: ({ requestId, action }: { requestId: string; action: "approve" | "reject" }) =>
+      groupService.handleJoinRequest(groupId, requestId, action),
+    onSuccess: (_, { action }) => {
+      queryClient.invalidateQueries({ queryKey: ["join-requests", groupId] });
+      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+      Alert.alert("Done", action === "approve" ? "Member added!" : "Request declined.");
+    },
+    onError: (err) => Alert.alert("Error", getErrorMessage(err)),
+  });
+
   const confirmDeleteGroup = () => {
     Alert.alert("Delete Group", `Delete "${group.data?.name ?? groupName}"? This cannot be undone.`, [
       { text: "Cancel", style: "cancel" },
@@ -83,11 +110,29 @@ export function GroupDetailScreen({ route, navigation }: Props) {
     ]);
   };
 
+  const handleGenerateCode = async () => {
+    setGeneratingCode(true);
+    try {
+      const res = await groupService.generateInviteCode(groupId);
+      setGeneratedCode(res.data.data.inviteCode);
+      setCodeExpiresAt(res.data.data.expiresAt);
+      setInviteModalVisible(true);
+    } catch (err: any) {
+      Alert.alert("Error", getErrorMessage(err));
+    } finally {
+      setGeneratingCode(false);
+    }
+  };
+
   if (group.isLoading) return <LoadingState />;
   if (group.isError) return <ErrorState message="Failed to load group" onRetry={group.refetch} />;
 
   const members = group.data?.members?.map((m) => ({ id: m.user.id, name: m.user.name })) ?? [];
   const totalExpenses = expenses.data?.reduce((sum, e) => sum + e.amount, 0) ?? 0;
+  const isAdmin = group.data?.members?.some(
+    (m) => m.user.id === currentUserId && m.role === "ADMIN"
+  );
+  const pendingRequests = joinRequests.data ?? [];
 
   return (
     <ScrollView
@@ -130,6 +175,84 @@ export function GroupDetailScreen({ route, navigation }: Props) {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* ── Invite Code Button (Admin only) ── */}
+      {isAdmin && (
+        <TouchableOpacity
+          style={[styles.inviteCodeBtn, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "33" }]}
+          onPress={handleGenerateCode}
+          disabled={generatingCode}
+        >
+          <Ionicons name="key-outline" size={20} color={colors.primary} />
+          <Text style={[styles.inviteCodeBtnText, { color: colors.primary }]}>
+            {generatingCode ? "Generating..." : "Generate Invite Code"}
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {/* ── Pending Join Requests (Admin only) ── */}
+      {isAdmin && (
+        <>
+          <View style={[styles.sectionHeader, { marginTop: spacing.md }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Join Requests
+            </Text>
+            {pendingRequests.length > 0 && (
+              <View style={[styles.badgePill, { backgroundColor: "#F59E0B" }]}>
+                <Text style={styles.badgePillText}>{pendingRequests.length}</Text>
+              </View>
+            )}
+          </View>
+          {joinRequests.isLoading ? (
+            <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: spacing.sm }}>
+              Loading requests...
+            </Text>
+          ) : pendingRequests.length === 0 ? (
+            <Card>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 4 }}>
+                <Ionicons name="checkmark-circle-outline" size={20} color={colors.textSecondary} />
+                <Text style={{ color: colors.textSecondary, fontSize: 14 }}>
+                  No pending join requests
+                </Text>
+              </View>
+            </Card>
+          ) : (
+            <View style={styles.requestList}>
+              {pendingRequests.map((req: any) => (
+                <Card key={req.id}>
+                  <View style={styles.requestRow}>
+                    <View style={[styles.requestAvatar, { backgroundColor: "#F59E0B" + "22" }]}>
+                      <Ionicons name="person-add" size={18} color="#F59E0B" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.requestName, { color: colors.text }]}>
+                        {req.user.name}
+                      </Text>
+                      <Text style={[styles.requestEmail, { color: colors.textSecondary }]}>
+                        {req.user.email}
+                      </Text>
+                    </View>
+                    <View style={styles.requestActions}>
+                      <TouchableOpacity
+                        style={[styles.requestActionBtn, { backgroundColor: colors.success + "18" }]}
+                        onPress={() => handleJoinRequest.mutate({ requestId: req.id, action: "approve" })}
+                      >
+                        <Ionicons name="checkmark" size={20} color={colors.success} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.requestActionBtn, { backgroundColor: colors.error + "18" }]}
+                        onPress={() => handleJoinRequest.mutate({ requestId: req.id, action: "reject" })}
+                      >
+                        <Ionicons name="close" size={20} color={colors.error} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Card>
+              ))}
+            </View>
+          )}
+        </>
+      )}
 
       {/* ── Member cards ── */}
       <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -338,6 +461,54 @@ export function GroupDetailScreen({ route, navigation }: Props) {
           </View>
         </Card>
       )}
+
+      {/* ── Invite Code Modal ── */}
+      <Modal
+        visible={inviteModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setInviteModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setInviteModalVisible(false)}
+        >
+          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+            <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+              <View style={styles.modalHeader}>
+                <View style={[styles.modalIcon, { backgroundColor: colors.primary + "18" }]}>
+                  <Ionicons name="key" size={32} color={colors.primary} />
+                </View>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Invite Code</Text>
+                <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                  Share this code with others to let them request to join this group
+                </Text>
+              </View>
+
+              <View style={[styles.codeDisplay, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                <Text style={[styles.codeText, { color: colors.primary }]}>
+                  {generatedCode}
+                </Text>
+              </View>
+
+              <View style={styles.codeInfo}>
+                <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.codeInfoText, { color: colors.textSecondary }]}>
+                  Expires in 24 hours
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.closeModalBtn, { backgroundColor: colors.primary }]}
+                onPress={() => setInviteModalVisible(false)}
+              >
+                <Text style={styles.closeModalBtnText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 }
@@ -355,8 +526,39 @@ const styles = StyleSheet.create({
   headerIcons: { flexDirection: "row", gap: 6 },
   iconBtn: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center", borderWidth: 1 },
 
+  // Invite code button
+  inviteCodeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+  },
+  inviteCodeBtnText: { fontSize: 15, fontWeight: "600" },
+
+  // Join Requests
+  requestList: { gap: spacing.sm, marginBottom: spacing.md },
+  requestRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  requestAvatar: {
+    width: 40, height: 40, borderRadius: 20,
+    alignItems: "center", justifyContent: "center",
+  },
+  requestName: { fontSize: 15, fontWeight: "700" },
+  requestEmail: { fontSize: 12 },
+  requestActions: { flexDirection: "row", gap: 6 },
+  requestActionBtn: {
+    width: 36, height: 36, borderRadius: 10,
+    alignItems: "center", justifyContent: "center",
+  },
+
   // Section
-  sectionTitle: { fontSize: 16, fontWeight: "600", marginBottom: spacing.sm },
+  sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: spacing.sm },
+  sectionTitle: { fontSize: 16, fontWeight: "600" },
+  badgePill: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10, minWidth: 22, alignItems: "center" },
+  badgePillText: { fontSize: 11, fontWeight: "700", color: "#fff" },
 
   // Members
   memberList: { gap: spacing.sm, marginBottom: spacing.sm },
@@ -412,4 +614,53 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   viewMoreText: { fontSize: 14, fontWeight: "600" },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: spacing.lg,
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: 360,
+    borderRadius: 20,
+    padding: spacing.lg,
+  },
+  modalHeader: { alignItems: "center", marginBottom: spacing.lg },
+  modalIcon: {
+    width: 64, height: 64, borderRadius: 18,
+    alignItems: "center", justifyContent: "center",
+    marginBottom: spacing.sm,
+  },
+  modalTitle: { fontSize: 22, fontWeight: "700", marginBottom: 4 },
+  modalSubtitle: { fontSize: 13, textAlign: "center", lineHeight: 18 },
+  codeDisplay: {
+    paddingVertical: 18,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    alignItems: "center",
+    marginBottom: spacing.sm,
+  },
+  codeText: {
+    fontSize: 36,
+    fontWeight: "900",
+    letterSpacing: 10,
+  },
+  codeInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    marginBottom: spacing.lg,
+  },
+  codeInfoText: { fontSize: 12 },
+  closeModalBtn: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  closeModalBtnText: { fontSize: 16, fontWeight: "700", color: "#fff" },
 });

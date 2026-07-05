@@ -81,4 +81,56 @@ export const groupsController = {
       next(err);
     }
   },
+
+  // ── Invite Code ──────────────────────────────────────────────
+
+  async generateInviteCode(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const result = await groupsService.generateInviteCode(
+        req.user!.userId,
+        paramId(req, "id"),
+      );
+      res.json({ data: result });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async joinByCode(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const result = await groupsService.joinByCode(
+        req.user!.userId,
+        req.body.inviteCode,
+      );
+      res.status(201).json({ data: result });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async listJoinRequests(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const requests = await groupsService.listJoinRequests(
+        req.user!.userId,
+        paramId(req, "id"),
+      );
+      res.json({ data: requests });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async handleJoinRequest(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const result = await groupsService.handleJoinRequest(
+        req.user!.userId,
+        paramId(req, "id"),
+        req.params.requestId as string,
+        req.body,
+      );
+      res.json({ data: result });
+    } catch (err) {
+      next(err);
+    }
+  },
 };

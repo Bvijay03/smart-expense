@@ -28,6 +28,9 @@ export const expenseService = {
   moveToGroup(id: string, groupId: string, description?: string) {
     return api.post(`/expenses/${id}/move-to-group`, { groupId, description });
   },
+  exportCsv() {
+    return api.get<string>("/expenses/export");
+  },
 };
 
 export const groupService = {
@@ -53,6 +56,23 @@ export const groupService = {
   },
   removeMember(groupId: string, memberId: string) {
     return api.delete(`/groups/${groupId}/members/${memberId}`);
+  },
+  generateInviteCode(groupId: string) {
+    return api.post<{ data: { inviteCode: string; expiresAt: string } }>(
+      `/groups/${groupId}/invite-code`
+    );
+  },
+  joinByCode(inviteCode: string) {
+    return api.post<{ data: { id: string; groupId: string; groupName: string; status: string } }>(
+      "/groups/join",
+      { inviteCode }
+    );
+  },
+  listJoinRequests(groupId: string) {
+    return api.get<{ data: any[] }>(`/groups/${groupId}/join-requests`);
+  },
+  handleJoinRequest(groupId: string, requestId: string, action: "approve" | "reject") {
+    return api.patch(`/groups/${groupId}/join-requests/${requestId}`, { action });
   },
 };
 

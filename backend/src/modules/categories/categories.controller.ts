@@ -25,7 +25,7 @@ export const categoriesController = {
 
   async delete(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      await categoriesService.delete(req.user!.userId, req.params.id);
+      await categoriesService.delete(req.user!.userId, req.params.id as string);
       res.status(204).end();
     } catch (err) {
       next(err);

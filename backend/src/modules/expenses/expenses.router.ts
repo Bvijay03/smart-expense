@@ -10,7 +10,6 @@ import {
   createExpenseSchema,
   expenseIdSchema,
   expenseQuerySchema,
-  exportCsvQuerySchema,
   updateExpenseSchema,
   moveToGroupSchema,
 } from "./expenses.schema";
@@ -19,7 +18,8 @@ const router = Router();
 
 router.use(authMiddleware);
 router.get("/", validateQuery(expenseQuerySchema), expensesController.list);
-router.get("/export", validateQuery(exportCsvQuerySchema), expensesController.exportCsv);
+router.get("/export", expensesController.exportCsv);
+
 router.post("/", validateBody(createExpenseSchema), expensesController.create);
 router.get(
   "/:id",

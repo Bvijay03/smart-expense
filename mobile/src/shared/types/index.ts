@@ -27,6 +27,8 @@ export interface Group {
   name: string;
   description: string | null;
   createdById: string;
+  inviteCode: string | null;
+  inviteCodeExp: string | null;
   createdAt: string;
   updatedAt: string;
   members?: GroupMember[];
@@ -119,4 +121,13 @@ export interface PaginatedResponse<T> {
 
 export interface ApiError {
   error: { code: string; message: string };
+}
+
+export interface JoinRequest {
+  id: string;
+  groupId: string;
+  userId: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  createdAt: string;
+  user: Pick<User, "id" | "name" | "email" | "avatarUrl">;
 }

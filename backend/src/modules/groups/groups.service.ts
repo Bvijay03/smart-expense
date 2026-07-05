@@ -8,7 +8,19 @@ import {
   AddMemberInput,
   CreateGroupInput,
   UpdateGroupInput,
+  JoinRequestActionInput,
 } from "./groups.schema";
+import crypto from "crypto";
+
+function generateCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I to avoid confusion
+  let code = "";
+  const bytes = crypto.randomBytes(6);
+  for (let i = 0; i < 6; i++) {
+    code += chars[bytes[i] % chars.length];
+  }
+  return code;
+}
 
 function formatGroup(group: {
   id: string;
@@ -17,6 +29,8 @@ function formatGroup(group: {
   createdById: string;
   createdAt: Date;
   updatedAt: Date;
+  inviteCode?: string | null;
+  inviteCodeExp?: Date | null;
   members?: Array<{
     id: string;
     role: string;
@@ -31,6 +45,8 @@ function formatGroup(group: {
     name: group.name,
     description: group.description,
     createdById: group.createdById,
+    inviteCode: group.inviteCode ?? null,
+    inviteCodeExp: group.inviteCodeExp ?? null,
     createdAt: group.createdAt,
     updatedAt: group.updatedAt,
     members: group.members?.map((m) => ({
@@ -143,14 +159,11 @@ export const groupsService = {
     let invitee;
 
     if (input.email) {
-      // If email provided, look up existing registered user
       invitee = await usersRepository.findByEmail(input.email);
       if (!invitee) {
-        // Email given but no registered user found — create a guest with that name
         invitee = await usersRepository.createGuest(input.name);
       }
     } else {
-      // No email — create a guest user with just the name
       invitee = await usersRepository.createGuest(input.name);
     }
 
@@ -188,6 +201,128 @@ export const groupsService = {
       throw new AppError(400, "INVALID", "Cannot remove yourself as admin");
     }
     await groupsRepository.removeMember(groupId, memberUserId);
+  },
+
+  // ── Invite Code ──────────────────────────────────────────────
+
+  async generateInviteCode(userId: string, groupId: string) {
+    await this.ensureAdmin(groupId, userId);
+    const group = await groupsRepository.findById(groupId);
+    if (!group) throw new AppError(404, "NOT_FOUND", "Group not found");
+
+    const code = generateCode();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await groupsRepository.setInviteCode(groupId, code, expiresAt);
+
+    return { inviteCode: code, expiresAt };
+  },
+
+  async joinByCode(userId: string, inviteCode: string) {
+    const group = await groupsRepository.findByInviteCode(inviteCode.toUpperCase());
+    if (!group) {
+      throw new AppError(404, "INVALID_CODE", "Invalid invite code");
+    }
+
+    if (group.inviteCodeExp && group.inviteCodeExp < new Date()) {
+      throw new AppError(410, "CODE_EXPIRED", "This invite code has expired");
+    }
+
+    if (group.deletedAt) {
+      throw new AppError(404, "NOT_FOUND", "Group no longer exists");
+    }
+
+    // Already a member?
+    const isMember = await groupsRepository.isMember(group.id, userId);
+    if (isMember) {
+      throw new AppError(409, "ALREADY_MEMBER", "You are already a member of this group");
+    }
+
+    // Already has a pending request?
+    const existingRequest = await groupsRepository.findExistingJoinRequest(group.id, userId);
+    if (existingRequest) {
+      if (existingRequest.status === "PENDING") {
+        throw new AppError(409, "ALREADY_REQUESTED", "You already have a pending join request for this group");
+      }
+      if (existingRequest.status === "REJECTED") {
+        throw new AppError(403, "REJECTED", "Your previous request to join this group was rejected");
+      }
+    }
+
+    // Create join request
+    const joinRequest = await groupsRepository.createJoinRequest(group.id, userId);
+
+    // Notify all admins
+    const admins = await groupsRepository.getAdmins(group.id);
+    const user = joinRequest.user;
+    for (const admin of admins) {
+      await notificationsService.create({
+        userId: admin.userId,
+        type: "GROUP_INVITE",
+        title: "Join request",
+        body: `${user.name} wants to join "${group.name}"`,
+        metadata: { groupId: group.id, joinRequestId: joinRequest.id },
+      });
+    }
+
+    return {
+      id: joinRequest.id,
+      groupId: group.id,
+      groupName: group.name,
+      status: "PENDING" as const,
+    };
+  },
+
+  async listJoinRequests(userId: string, groupId: string) {
+    await this.ensureAdmin(groupId, userId);
+    return groupsRepository.findPendingRequests(groupId);
+  },
+
+  async handleJoinRequest(
+    adminUserId: string,
+    groupId: string,
+    requestId: string,
+    input: JoinRequestActionInput,
+  ) {
+    await this.ensureAdmin(groupId, adminUserId);
+
+    const request = await groupsRepository.findJoinRequest(requestId);
+    if (!request) {
+      throw new AppError(404, "NOT_FOUND", "Join request not found");
+    }
+    if (request.groupId !== groupId) {
+      throw new AppError(400, "INVALID", "Request does not belong to this group");
+    }
+    if (request.status !== "PENDING") {
+      throw new AppError(400, "ALREADY_HANDLED", "This request has already been handled");
+    }
+
+    if (input.action === "approve") {
+      await groupsRepository.addMember(groupId, request.userId);
+      await groupsRepository.updateJoinRequestStatus(requestId, "APPROVED");
+
+      await notificationsService.create({
+        userId: request.userId,
+        type: "GROUP_INVITE",
+        title: "Request approved",
+        body: `You were added to group "${request.group.name}"`,
+        metadata: { groupId },
+      });
+
+      return { status: "APPROVED", message: `${request.user.name} has been added to the group` };
+    } else {
+      await groupsRepository.updateJoinRequestStatus(requestId, "REJECTED");
+
+      await notificationsService.create({
+        userId: request.userId,
+        type: "GENERAL",
+        title: "Request declined",
+        body: `Your request to join "${request.group.name}" was declined`,
+        metadata: { groupId },
+      });
+
+      return { status: "REJECTED", message: `${request.user.name}'s request was declined` };
+    }
   },
 
   async ensureMember(groupId: string, userId: string) {

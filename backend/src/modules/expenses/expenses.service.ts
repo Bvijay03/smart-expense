@@ -139,4 +139,20 @@ export const expensesService = {
 
     return sharedExpense;
   },
+
+  async exportCsv(userId: string): Promise<string> {
+    const rows = await expensesRepository.findAllForExport(userId);
+    const header = "id,amount,category,expenseDate,notes,createdAt";
+    const lines = rows.map((r) =>
+      [
+        r.id,
+        decimalToNumber(r.amount as any).toFixed(2),
+        r.category,
+        r.expenseDate.toISOString(),
+        `"${(r.notes ?? "").replace(/"/g, '""')}"`,
+        r.createdAt.toISOString(),
+      ].join(",")
+    );
+    return [header, ...lines].join("\n");
+  },
 };

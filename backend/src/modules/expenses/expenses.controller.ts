@@ -71,4 +71,15 @@ export const expensesController = {
       next(err);
     }
   },
+
+  async exportCsv(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const csv = await expensesService.exportCsv(req.user!.userId);
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", "attachment; filename=\"expenses.csv\"");
+      res.send(csv);
+    } catch (err) {
+      next(err);
+    }
+  },
 };

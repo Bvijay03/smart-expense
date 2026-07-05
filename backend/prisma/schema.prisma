@@ -23,6 +23,12 @@ enum SettlementStatus {
   SETTLED
 }
 
+enum JoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum NotificationType {
   GROUP_INVITE
   SETTLEMENT_REMINDER
@@ -52,6 +58,7 @@ model User {
   notifications    Notification[]
   categories       Category[]
   recurringExpenses RecurringExpense[]
+  joinRequests     JoinRequest[]
 
   @@index([email])
   @@map("users")
@@ -88,18 +95,21 @@ model Expense {
 }
 
 model Group {
-  id          String    @id @default(uuid())
-  name        String
-  description String?
-  createdById String    @map("created_by")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at")
+  id            String    @id @default(uuid())
+  name          String
+  description   String?
+  createdById   String    @map("created_by")
+  inviteCode    String?   @unique @map("invite_code")
+  inviteCodeExp DateTime? @map("invite_code_exp")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
 
   createdBy      User            @relation("GroupCreator", fields: [createdById], references: [id])
   members        GroupMember[]
   sharedExpenses SharedExpense[]
   settlements    Settlement[]
+  joinRequests   JoinRequest[]
 
   @@map("groups")
 }
@@ -234,4 +244,19 @@ model RecurringExpense {
   user User @relation(fields: [userId], references: [id])
 
   @@map("recurring_expenses")
+}
+
+model JoinRequest {
+  id        String            @id @default(uuid())
+  groupId   String            @map("group_id")
+  userId    String            @map("user_id")
+  status    JoinRequestStatus @default(PENDING)
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@map("join_requests")
 }
