@@ -58,5 +58,9 @@ function resolveHost(host?: string) {
 const expoHost = resolveHost(rawHost);
 const dynamicExpoUrl = expoHost ? `http://${expoHost}:3000/api/v1` : undefined;
 
-// Priority: dynamic Expo host (always correct for Expo Go) > .env > emulator fallback
-export const API_URL = dynamicExpoUrl || extraApiUrl || "http://10.0.2.2:3000/api/v1";
+// If .env is a cloud HTTPS URL → always use it directly (skip Expo host detection)
+// Otherwise fall back to dynamic Expo host (correct for local Expo Go dev)
+const isCloudUrl = extraApiUrl?.startsWith("https://");
+export const API_URL = isCloudUrl
+  ? extraApiUrl!
+  : dynamicExpoUrl || extraApiUrl || "http://10.0.2.2:3000/api/v1";
