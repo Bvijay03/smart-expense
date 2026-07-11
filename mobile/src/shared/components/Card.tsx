@@ -29,19 +29,24 @@ export function Card({ children, style }: CardProps) {
 export function ScreenHeader({
   title,
   subtitle,
+  rightAction,
 }: {
   title: string;
   subtitle?: string;
+  rightAction?: React.ReactNode;
 }) {
   const { colors } = useTheme();
   return (
-    <View style={styles.header}>
-      <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-      {subtitle ? (
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          {subtitle}
-        </Text>
-      ) : null}
+    <View style={[styles.header, rightAction ? styles.headerRow : null]}>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+        {subtitle ? (
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+      {rightAction ? <View>{rightAction}</View> : null}
     </View>
   );
 }
@@ -58,6 +63,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   header: { marginBottom: spacing.md },
+  headerRow: { flexDirection: "row", alignItems: "center" },
   title: { fontSize: 24, fontWeight: "700" },
   subtitle: { fontSize: 14, marginTop: spacing.xs },
 });

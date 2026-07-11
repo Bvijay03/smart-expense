@@ -1,34 +1,43 @@
-## NOW — Quick Wins
+## NOW — Quick Wins ✅ All Done
 - [x] Shared expense detail view (tap card → see full split breakdown)
 - [x] Edit & delete personal expenses
 - [x] Remove member from group
 - [x] Edit group name/description
 - [x] Profile — set your display name
-- [x] Dark mode toggle (already in profile)
+- [x] Dark mode toggle (in profile)
 - [x] Budget alerts — warn when near/over budget
 
-## SOON — Medium Effort
+## SOON — Medium Effort ✅ All Done
 - [x] Detailed settlements — per-person breakdown (who owes who exactly)
-- [x] Analytics report — charts, category breakdown, month comparison
-- [x] Custom expense categories
-- [ ] Move personal expense → group
+- [x] Analytics report — summary cards, category breakdown, month comparison
+- [x] Custom expense categories (user-defined, with icon + color)
+- [x] Move personal expense → group expense
 - [x] Search/filter expenses (by date, category, amount)
-- [x] Verify changes end-to-end
+- [x] Group invite code + admin approval workflow
+- [x] Notifications tab with live unread badge
+- [x] Admin join-request review UI in GroupDetailScreen
 
 ## FUTURE — After Offline Migration
 - [x] Recurring expenses (monthly rent, subscriptions)
-- [x] Export to CSV
-- [x] Export directly from database to local CSV file
+- [x] Export to CSV (DB direct export via psql COPY)
 - [ ] Export to PDF
 - [ ] Receipt photo attachment
-- [ ] Split by custom percentage/exact input per member
+- [ ] Split by custom percentage / exact input per member
 - [ ] Local push notifications / reminders (you owe X)
-- [ ] Group invite via link/QR code
-% - [ ] Multi-currency support
-% - [ ] Voice entry — "spent 200 on food" (NLP integration)
+- [ ] Group invite via QR code
+- [ ] Multi-currency support
+- [ ] Voice entry — "spent 200 on food" (NLP integration)
 
-## DONE
+## DONE — Core
 - [x] Add members by name (email optional)
 - [x] Member selection in shared expense split
 - [x] Delete group
 - [x] Delete shared expense
+- [x] JWT auth with refresh tokens
+- [x] Settlement engine (min-cash-flow algorithm)
+- [x] In-app notifications (budget alerts, group events)
+- [x] Recurring expenses backend (full CRUD + daily process trigger)
+- [x] /recurring route registered and wired
+- [x] Categories backend (full CRUD) + migration applied
+- [x] JoinRequest model + migration applied
+- [x] TypeScript: 0 errors across mobile + backend

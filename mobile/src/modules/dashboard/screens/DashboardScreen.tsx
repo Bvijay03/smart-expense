@@ -54,6 +54,19 @@ export function DashboardScreen() {
       <ScreenHeader
         title={`Hello, ${user?.name?.split(" ")[0] ?? "there"}`}
         subtitle="Your finance overview"
+        rightAction={
+          <TouchableOpacity
+            style={styles.bellBtn}
+            onPress={() => navigation.navigate("Notifications")}
+          >
+            <Ionicons name="notifications-outline" size={24} color={colors.primary} />
+            {unread > 0 && (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText}>{unread > 9 ? "9+" : unread}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        }
       />
 
       <Card>
@@ -67,11 +80,17 @@ export function DashboardScreen() {
       </Card>
 
       <View style={styles.row}>
-        <Card style={styles.halfCard}>
-          <Ionicons name="notifications-outline" size={24} color={colors.primary} />
-          <Text style={[styles.statValue, { color: colors.text }]}>{unread}</Text>
-          <Text style={{ color: colors.textSecondary }}>Unread</Text>
-        </Card>
+        <TouchableOpacity
+          style={styles.halfCard}
+          onPress={() => navigation.navigate("Notifications")}
+          activeOpacity={0.7}
+        >
+          <Card style={{ flex: 1, alignItems: "center" }}>
+            <Ionicons name="notifications-outline" size={24} color={colors.primary} />
+            <Text style={[styles.statValue, { color: colors.text }]}>{unread}</Text>
+            <Text style={{ color: colors.textSecondary }}>Unread</Text>
+          </Card>
+        </TouchableOpacity>
         <Card style={styles.halfCard}>
           <Ionicons name="warning-outline" size={24} color={colors.warning} />
           <Text style={[styles.statValue, { color: colors.text }]}>{overBudget}</Text>
@@ -106,7 +125,7 @@ const styles = StyleSheet.create({
   cardLabel: { fontSize: 13, marginBottom: 4 },
   amount: { fontSize: 32, fontWeight: "700", marginBottom: 4 },
   row: { flexDirection: "row", gap: spacing.sm },
-  halfCard: { flex: 1, alignItems: "center" },
+  halfCard: { flex: 1 },
   statValue: { fontSize: 24, fontWeight: "700", marginVertical: 4 },
   sectionTitle: { fontSize: 18, fontWeight: "600", marginVertical: spacing.md },
   action: {
@@ -119,4 +138,16 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   actionText: { flex: 1, fontSize: 16, fontWeight: "500" },
+  bellBtn: {
+    width: 42, height: 42, borderRadius: 21,
+    alignItems: "center", justifyContent: "center",
+  },
+  bellBadge: {
+    position: "absolute", top: 0, right: 0,
+    minWidth: 18, height: 18, borderRadius: 9,
+    backgroundColor: "#EF4444",
+    alignItems: "center", justifyContent: "center",
+    paddingHorizontal: 3,
+  },
+  bellBadgeText: { color: "#fff", fontSize: 10, fontWeight: "700" },
 });

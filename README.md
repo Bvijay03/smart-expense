@@ -4,15 +4,18 @@ Personal & Group Finance Manager — React Native (Expo) + Node.js + PostgreSQL.
 
 ## Architecture
 
-- **mobile/** — Expo managed React Native app (TypeScript)
-- **backend/** — Express REST API (TypeScript, Prisma)
-- **docker-compose.yml** — Local PostgreSQL
+```
+smart-expense/
+├── mobile/          # Expo managed React Native app (TypeScript)
+├── backend/         # Express REST API (TypeScript, Prisma ORM)
+└── docker-compose.yml  # Local PostgreSQL database
+```
 
 ## Prerequisites
 
 - Node.js 18+
 - Docker Desktop (for PostgreSQL)
-- Android Studio / emulator or Expo Go on device
+- Expo Go app on physical Android/iOS device, **or** Android emulator
 
 ## Setup
 
@@ -26,85 +29,143 @@ docker compose up -d
 
 ```bash
 cd backend
-cp .env.example .env
+cp .env.example .env        # fill in JWT secrets
 npm install
-npx prisma migrate dev --name init
-npm run dev
+npx prisma migrate dev      # apply all migrations
+npm run dev                 # runs on http://0.0.0.0:3000
 ```
 
-API runs at `http://localhost:3000`  
 Health check: `GET /health`
 
 ### 3. Mobile
 
 ```bash
 cd mobile
-cp .env.example .env
+cp .env.example .env        # set EXPO_PUBLIC_API_URL
 npm install
-npm run android
+npx expo start --clear      # scan QR with Expo Go
 ```
 
-**API URL for emulator:** `http://10.0.2.2:3000/api/v1` (default in `.env.example`)  
-**Physical device:** use your machine's LAN IP instead of `10.0.2.2`.
+**API URL — emulator:** `http://10.0.2.2:3000/api/v1`  
+**API URL — physical device:** use your machine's LAN IP, e.g. `http://192.168.x.x:3000/api/v1`
 
-## API Overview (`/api/v1`)
+## API Reference (`/api/v1`)
 
-| Module | Endpoints |
-|--------|-----------|
-| auth | register, login, refresh, me, logout |
-| expenses | CRUD personal expenses |
-| groups | CRUD groups, add/remove members |
-| shared-expenses | CRUD under `/groups/:id/expenses` |
-| settlements | balances, list, mark settled |
-| budgets | CRUD with spend comparison |
-| analytics | summary, by-category, trends |
-| notifications | list, mark read |
+| Module | Routes |
+|--------|--------|
+| `auth` | POST register, login, refresh · GET me · POST logout |
+| `expenses` | CRUD personal expenses · POST `/:id/move-to-group` |
+| `groups` | CRUD groups · add/remove members · POST `/:id/invite-code` · POST `/join` |
+| `groups/:id/join-requests` | GET list · PATCH `/:requestId` (approve/reject) |
+| `groups/:id/expenses` | CRUD shared expenses |
+| `groups/:id/settlements` | GET balances · list · mark settled |
+| `settlements` | GET all settlements across groups |
+| `budgets` | CRUD budgets with spend comparison & alerts |
+| `analytics` | GET summary, by-category, trends |
+| `notifications` | GET list · PATCH mark-read · PATCH read-all |
+| `categories` | CRUD custom expense categories |
+| `recurring` | CRUD recurring expenses · POST `/process` (trigger daily creation) |
 
 ## Environment Variables
 
 ### Backend (`backend/.env`)
 
-- `DATABASE_URL` — PostgreSQL connection string
-- `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` — min 32 chars each
-- `PORT` — default 3000
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_ACCESS_SECRET` | Min 32 chars |
+| `JWT_REFRESH_SECRET` | Min 32 chars |
+| `PORT` | Default `3000` |
 
 ### Mobile (`mobile/.env`)
 
-- `EXPO_PUBLIC_API_URL` — backend base URL
+| Variable | Description |
+|----------|-------------|
+| `EXPO_PUBLIC_API_URL` | Backend base URL (e.g. `http://192.168.x.x:3000/api/v1`) |
 
-## Project Structure
+## Feature Set
 
-Feature-based modules in both `mobile/src/modules/` and `backend/src/modules/`.
+### Authentication
+- JWT access + refresh token flow
+- Secure token storage (expo-secure-store)
+- Session restore on app launch
 
-## Version 1 Scope
+### Personal Expenses
+- Create / edit / delete with date picker
+- Custom categories (user-defined, per-account)
+- Search & filter by category, date, notes
+- Move personal expense → group expense
 
-- Authentication (JWT)
-- Personal expenses
-- Groups & shared expenses with splits
-- Settlement engine (min-cash-flow)
-- Monthly budgets
-- Analytics charts
-- In-app notifications
+### Recurring Expenses
+- Set day-of-month + amount + category
+- Toggle active/inactive
+- Daily auto-creation via `/recurring/process` endpoint
 
-## Future (V2)
+### Groups & Shared Expenses
+- Create groups, edit name/description, delete
+- Add members by name (email optional) or via **invite code**
+- Join group by 6-char invite code → admin approval workflow
+- CRUD shared expenses with equal split
+- Per-member balance: paid / owed / net
+- Detailed "who owes whom" breakdown on member cards
 
-Receipt attachments, OCR, AI categorization, push notifications, voice entry.
+### Settlements
+- Min-cash-flow settlement engine (minimises transactions)
+- Mark individual settlements as paid
+- Per-group settlement history
 
-## DB export fallback (fast CSV dump)
+### Budgets
+- Set monthly budget per category
+- Real-time spend vs budget comparison
+- Color-coded progress bars (green → yellow → red)
+- In-app notification alert when near/over budget
 
-If you need a quick, full export of group-related CSVs from the local Postgres container, use `psql`'s `COPY` command inside the container and then copy the file to the host.
+### Analytics
+- Monthly total spend
+- Avg spend per day
+- Top spending category
+- Month-over-month comparison
+- Category breakdown list
 
-Example (from project root):
+### Notifications
+- **Bottom tab** with live unread badge (polls every 30s)
+- Bell icon with badge on Dashboard header
+- Mark individual or all as read
+- Types: budget alerts, group join requests, settlement updates, general
+
+### Custom Categories
+- Add / delete categories per user
+- Icon + color picker
+- Used in both personal and shared expense forms
+
+## DB Export (CSV)
+
+Quick full export from the local Postgres container:
 
 ```bash
-# run a COPY query inside the postgres container to write CSV to /tmp
-docker compose exec -T postgres psql -U smartexpense -d smart_expense -c "COPY (SELECT g.id AS group_id, g.name AS group_name, se.id AS shared_expense_id, se.description, se.amount, se.category, se.expense_date, se.split_type, payer.id AS paid_by_user_id, payer.name AS paid_by_name, payer.email AS paid_by_email, member.id AS split_user_id, member.name AS split_user_name, member.email AS split_user_email, es.amount_owed AS split_amount_owed, se.created_at FROM shared_expenses se JOIN groups g ON g.id = se.group_id JOIN users payer ON payer.id = se.paid_by JOIN expense_splits es ON es.shared_expense_id = se.id JOIN users member ON member.id = es.user_id WHERE se.deleted_at IS NULL ORDER BY g.name, se.expense_date DESC, member.name) TO '/tmp/group-expenses-details.csv' WITH CSV HEADER;"
+# Export group expenses to CSV
+docker compose exec -T postgres psql -U smartexpense -d smart_expense \
+  -c "COPY (SELECT g.name AS group_name, se.description, se.amount, se.category, \
+             se.expense_date, payer.name AS paid_by, member.name AS split_user, \
+             es.amount_owed \
+             FROM shared_expenses se \
+             JOIN groups g ON g.id = se.group_id \
+             JOIN users payer ON payer.id = se.paid_by \
+             JOIN expense_splits es ON es.shared_expense_id = se.id \
+             JOIN users member ON member.id = es.user_id \
+             WHERE se.deleted_at IS NULL \
+             ORDER BY g.name, se.expense_date DESC) \
+  TO '/tmp/group-expenses.csv' WITH CSV HEADER;"
 
-# copy file from container to host CWD
-docker compose cp postgres:/tmp/group-expenses-details.csv ./group-expenses-details.csv
+docker compose cp postgres:/tmp/group-expenses.csv ./group-expenses.csv
 ```
 
-Notes:
-- Adjust database user, database name or container service name if you changed them in `docker-compose.yml` or `backend/.env`.
-- The SQL above flattens shared expenses to one row per split (includes payer and per-split user). You can modify the `SELECT` to add/remove columns.
-- If you prefer a Node script, see `backend/data/export-groups-csv.mjs` which also produces `groups.csv`, `group_members.csv`, `shared_expenses.csv`, and `settlements.csv`.
+## Future Roadmap
+
+- [ ] Export to PDF
+- [ ] Receipt photo attachment
+- [ ] Split by custom % or exact amount per member
+- [ ] Local push notifications / reminders
+- [ ] Multi-currency support
+- [ ] Voice entry — "spent 200 on food" (NLP integration)
+- [ ] QR code group invites

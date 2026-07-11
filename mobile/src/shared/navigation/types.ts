@@ -8,6 +8,7 @@ export type MainTabParamList = {
   Expenses: undefined;
   Groups: undefined;
   Analytics: undefined;
+  Notifications: undefined;
 };
 
 export type RootStackParamList = {

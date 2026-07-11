@@ -12,6 +12,7 @@ import budgetsRouter from "@/modules/budgets/budgets.router";
 import analyticsRouter from "@/modules/analytics/analytics.router";
 import notificationsRouter from "@/modules/notifications/notifications.router";
 import categoriesRouter from "@/modules/categories/categories.router";
+import recurringRouter from "@/modules/recurring/recurring.router";
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use("/budgets", budgetsRouter);
 router.use("/analytics", analyticsRouter);
 router.use("/notifications", notificationsRouter);
 router.use("/categories", categoriesRouter);
+router.use("/recurring", recurringRouter);
 
 export default router;

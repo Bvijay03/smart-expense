@@ -116,7 +116,11 @@ export const expensesService = {
     // Get group members for equal split
     const group = await groupsService.getById(userId, input.groupId);
     const members = (group as any).members ?? [];
-    if (members.length === 0) {
+    const memberIds = members
+      .map((member: { user?: { id?: string }; userId?: string }) => member.user?.id ?? member.userId)
+      .filter((memberId: string | undefined): memberId is string => Boolean(memberId));
+
+    if (memberIds.length === 0) {
       throw new AppError(400, "NO_MEMBERS", "Group has no members");
     }
 
@@ -131,7 +135,7 @@ export const expensesService = {
       category: expense.category,
       expenseDate: expense.expenseDate,
       splitType: "EQUAL",
-      splits: members.map((m: { userId: string }) => ({ userId: m.userId, value: 1 })),
+      splits: memberIds.map((memberId: string) => ({ userId: memberId, value: 1 })),
     });
 
     // Soft-delete the original personal expense
