@@ -24,6 +24,12 @@
     },
     "plugins": [
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "apiUrl": "https://smart-expense-api-16xp.onrender.com/api/v1",
+      "eas": {
+        "projectId": "21294e33-3174-4324-bd39-5837b4b87f6e"
+      }
+    }
   }
 }

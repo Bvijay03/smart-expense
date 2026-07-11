@@ -33,13 +33,22 @@ export function RecurringScreen() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      recurringService.create({
-        amount: Number(amount),
+    mutationFn: () => {
+      const parsedAmount = Number(amount);
+      const parsedDay = Number(dayOfMonth);
+      if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
+        throw new Error("Enter a valid amount");
+      }
+      if (!dayOfMonth || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) {
+        throw new Error("Day of month must be between 1 and 31");
+      }
+      return recurringService.create({
+        amount: parsedAmount,
         category,
         notes: notes.trim() || undefined,
-        dayOfMonth: Number(dayOfMonth),
-      }),
+        dayOfMonth: parsedDay,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["recurring"] });
       setAmount("100");
