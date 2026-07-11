@@ -15,10 +15,13 @@ COPY . .
 # Generate Prisma client + build TypeScript
 RUN npx prisma generate && npm run build
 
+# Debug: show what tsc actually produced
+RUN echo "=== dist contents ===" && find /app/dist -type f -name "*.js" | head -20 || echo "dist is empty or missing"
+
 # Remove devDependencies for leaner image
 RUN npm prune --production
 
 EXPOSE 3000
 
-# Run migrations then start
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+# Run migrations then start (auto-detect correct path)
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/index.js"]
