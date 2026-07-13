@@ -1,4 +1,4 @@
-# Exporter Takeover Report
+# Exporte                                                          r Takeover Report
 
 Takeover date: 2026-07-02
 
