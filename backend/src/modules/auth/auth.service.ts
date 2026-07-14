@@ -13,7 +13,7 @@ import {
   verifyRefreshToken,
 } from "@/utils/jwt";
 import { authRepository } from "./auth.repository";
-import { LoginInput, RegisterInput } from "./auth.schema";
+import { LoginInput, RegisterInput, ForgotPasswordInput } from "./auth.schema";
 
 function sanitizeUser(user: {
   id: string;
@@ -132,5 +132,16 @@ export const authService = {
 
   async logout(userId: string) {
     await authRepository.deleteAllRefreshTokens(userId);
+  },
+
+  async forgotPassword(input: ForgotPasswordInput) {
+    const user = await authRepository.findUserByEmail(input.email);
+    if (!user) {
+      // Do not reveal if user exists or not for security reasons
+      return;
+    }
+    // Mock sending email
+    console.log(`[Mock Email] Password reset requested for ${user.email}`);
+    // In a real application, you would generate a secure token here and send it via an email service.
   },
 };

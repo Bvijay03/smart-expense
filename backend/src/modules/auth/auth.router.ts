@@ -7,6 +7,7 @@ import {
   loginSchema,
   refreshSchema,
   registerSchema,
+  forgotPasswordSchema,
 } from "./auth.schema";
 
 const authLimiter = rateLimit({
@@ -34,6 +35,12 @@ router.post(
   authLimiter,
   validateBody(refreshSchema),
   authController.refresh,
+);
+router.post(
+  "/forgot-password",
+  authLimiter,
+  validateBody(forgotPasswordSchema),
+  authController.forgotPassword,
 );
 router.get("/me", authMiddleware, authController.me);
 router.post("/logout", authMiddleware, authController.logout);

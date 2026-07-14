@@ -47,4 +47,13 @@ export const authController = {
       next(err);
     }
   },
+
+  async forgotPassword(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      await authService.forgotPassword(req.body);
+      res.json({ data: { message: "If an account with that email exists, we've sent instructions to reset your password." } });
+    } catch (err) {
+      next(err);
+    }
+  },
 };
