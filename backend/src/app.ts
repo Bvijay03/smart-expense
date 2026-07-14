@@ -8,6 +8,9 @@ import { errorMiddleware } from "@/middlewares/error.middleware";
 
 export function createApp() {
   const app = express();
+  
+  // Trust the Render reverse proxy so rate limiting works correctly
+  app.set("trust proxy", 1);
 
   app.use(helmet());
   app.use(
