@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Switch,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { z } from "zod";
@@ -23,6 +24,7 @@ import { AuthStackParamList } from "@/shared/navigation/types";
 const schema = z.object({
   email: z.email(),
   password: z.string().min(1, "Password is required"),
+  rememberMe: z.boolean().default(true),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -35,13 +37,13 @@ export function LoginScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", rememberMe: true },
   });
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      await login(data.email, data.password);
+      await login(data.email, data.password, data.rememberMe);
     } catch (err) {
       Alert.alert("Login failed", getErrorMessage(err));
     } finally {
@@ -88,6 +90,35 @@ export function LoginScreen({ navigation }: Props) {
           )}
         />
 
+        <View style={styles.optionsContainer}>
+          <View style={styles.rememberMeContainer}>
+            <Controller
+              control={control}
+              name="rememberMe"
+              render={({ field: { onChange, value } }) => (
+                <>
+                  <Switch
+                    value={value}
+                    onValueChange={onChange}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    style={{ transform: [{ scale: 0.8 }] }}
+                  />
+                  <Text style={[styles.rememberMeText, { color: colors.textSecondary }]}>
+                    Remember me
+                  </Text>
+                </>
+              )}
+            />
+          </View>
+          
+          <Text
+            style={[styles.forgotPasswordText, { color: colors.primary }]}
+            onPress={() => navigation.navigate("ForgotPassword")}
+          >
+            Forgot Password?
+          </Text>
+        </View>
+
         <Button title="Sign In" loading={loading} onPress={handleSubmit(onSubmit)} />
 
         <View style={styles.footer}>
@@ -111,5 +142,9 @@ const styles = StyleSheet.create({
   content: { flexGrow: 1, justifyContent: "center", padding: spacing.lg },
   brand: { fontSize: 14, fontWeight: "700", marginBottom: spacing.sm },
   title: { fontSize: 28, fontWeight: "700", marginBottom: spacing.lg },
+  optionsContainer: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.xl },
+  rememberMeContainer: { flexDirection: "row", alignItems: "center", marginLeft: -8 },
+  rememberMeText: { marginLeft: spacing.xs, fontSize: 14 },
+  forgotPasswordText: { fontSize: 14, fontWeight: "600" },
   footer: { flexDirection: "row", justifyContent: "center", marginTop: spacing.lg },
 });

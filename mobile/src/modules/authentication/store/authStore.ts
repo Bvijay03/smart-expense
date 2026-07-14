@@ -9,10 +9,11 @@ interface AuthState {
   isLoading: boolean;
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   restoreSession: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -23,9 +24,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setUser: (user) => set({ user, isAuthenticated: !!user }),
   setLoading: (isLoading) => set({ isLoading }),
 
-  async login(email, password) {
+  async login(email, password, rememberMe = true) {
     const { data } = await api.post("/auth/login", { email, password });
     const { user, accessToken, refreshToken } = data.data;
+    tokenStorage.setRememberMe(rememberMe);
     await tokenStorage.setTokens(accessToken, refreshToken);
     set({ user, isAuthenticated: true });
   },
@@ -37,6 +39,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       password,
     });
     const { user, accessToken, refreshToken } = data.data;
+    // Default to remember me on register
+    tokenStorage.setRememberMe(true);
     await tokenStorage.setTokens(accessToken, refreshToken);
     set({ user, isAuthenticated: true });
   },
@@ -65,4 +69,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
+
+  async forgotPassword(email: string) {
+    await api.post("/auth/forgot-password", { email });
+  }
 }));

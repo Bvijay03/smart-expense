@@ -4,6 +4,7 @@ import { useAuthStore } from "@/modules/authentication/store/authStore";
 import { SplashScreen } from "@/modules/authentication/screens/SplashScreen";
 import { LoginScreen } from "@/modules/authentication/screens/LoginScreen";
 import { RegisterScreen } from "@/modules/authentication/screens/RegisterScreen";
+import { ForgotPasswordScreen } from "@/modules/authentication/screens/ForgotPasswordScreen";
 import { AddExpenseScreen } from "@/modules/expenses/screens/AddExpenseScreen";
 import { EditExpenseScreen } from "@/modules/expenses/screens/EditExpenseScreen";
 import { CreateGroupScreen } from "@/modules/groups/screens/CreateGroupScreen";
@@ -32,6 +33,7 @@ function AuthNavigator() {
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
+      <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     </AuthStack.Navigator>
   );
 }
