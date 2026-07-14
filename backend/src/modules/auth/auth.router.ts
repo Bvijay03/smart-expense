@@ -42,6 +42,8 @@ router.post(
   validateBody(forgotPasswordSchema),
   authController.forgotPassword,
 );
+router.get("/reset-password", authController.renderResetPasswordPage);
+router.post("/reset-password", authController.resetPassword);
 router.get("/me", authMiddleware, authController.me);
 router.post("/logout", authMiddleware, authController.logout);
 

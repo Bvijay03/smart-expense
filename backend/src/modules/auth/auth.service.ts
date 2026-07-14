@@ -14,6 +14,8 @@ import {
 } from "@/utils/jwt";
 import { authRepository } from "./auth.repository";
 import { LoginInput, RegisterInput, ForgotPasswordInput } from "./auth.schema";
+import crypto from "crypto";
+import { sendResetPasswordEmail } from "@/utils/email";
 
 function sanitizeUser(user: {
   id: string;
@@ -140,8 +142,38 @@ export const authService = {
       // Do not reveal if user exists or not for security reasons
       return;
     }
-    // Mock sending email
-    console.log(`[Mock Email] Password reset requested for ${user.email}`);
-    // In a real application, you would generate a secure token here and send it via an email service.
+    
+    // Generate secure token
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiry = new Date();
+    expiry.setHours(expiry.getHours() + 1);
+
+    await authRepository.updateUser(user.id, {
+      resetToken: token,
+      resetTokenExp: expiry,
+    });
+
+    const resetLink = `${process.env.API_URL || "https://smart-expense-api-16xp.onrender.com/api/v1"}/auth/reset-password?token=${token}`;
+    
+    await sendResetPasswordEmail(user.email, resetLink);
+  },
+
+  async resetPassword(token: string, newPassword: string) {
+    const user = await authRepository.findUserByResetToken(token);
+    
+    if (!user) {
+      throw new AppError(400, "INVALID_TOKEN", "Invalid or expired password reset token.");
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+
+    await authRepository.updateUser(user.id, {
+      passwordHash,
+      resetToken: null,
+      resetTokenExp: null,
+    });
+    
+    // Invalidate all active sessions by clearing refresh tokens
+    await authRepository.deleteAllRefreshTokens(user.id);
   },
 };

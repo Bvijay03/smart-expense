@@ -38,4 +38,21 @@ export const authRepository = {
   deleteAllRefreshTokens(userId: string) {
     return prisma.refreshToken.deleteMany({ where: { userId } });
   },
+
+  updateUser(userId: string, data: any) {
+    return prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+  },
+
+  findUserByResetToken(token: string) {
+    return prisma.user.findFirst({
+      where: { 
+        resetToken: token,
+        resetTokenExp: { gt: new Date() },
+        deletedAt: null
+      },
+    });
+  },
 };

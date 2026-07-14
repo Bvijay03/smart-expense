@@ -37,28 +37,30 @@ enum NotificationType {
 }
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String    @map("password_hash")
-  name         String
-  avatarUrl    String?   @map("avatar_url")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  deletedAt    DateTime? @map("deleted_at")
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  name          String
+  avatarUrl     String?   @map("avatar_url")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  resetToken    String?   @map("reset_token")
+  resetTokenExp DateTime? @map("reset_token_exp")
 
-  refreshTokens    RefreshToken[]
-  expenses         Expense[]
-  groupMemberships GroupMember[]
-  groupsCreated    Group[]         @relation("GroupCreator")
-  expensesPaid     SharedExpense[] @relation("PaidBy")
-  expenseSplits    ExpenseSplit[]
-  settlementsFrom  Settlement[]    @relation("SettlementFrom")
-  settlementsTo    Settlement[]    @relation("SettlementTo")
-  budgets          Budget[]
-  notifications    Notification[]
-  categories       Category[]
+  refreshTokens     RefreshToken[]
+  expenses          Expense[]
+  groupMemberships  GroupMember[]
+  groupsCreated     Group[]            @relation("GroupCreator")
+  expensesPaid      SharedExpense[]    @relation("PaidBy")
+  expenseSplits     ExpenseSplit[]
+  settlementsFrom   Settlement[]       @relation("SettlementFrom")
+  settlementsTo     Settlement[]       @relation("SettlementTo")
+  budgets           Budget[]
+  notifications     Notification[]
+  categories        Category[]
   recurringExpenses RecurringExpense[]
-  joinRequests     JoinRequest[]
+  joinRequests      JoinRequest[]
 
   @@index([email])
   @@map("users")
