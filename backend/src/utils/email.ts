@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
     rejectUnauthorized: false
   },
   family: 4,
-});
+} as any);
 
 export async function sendResetPasswordEmail(to: string, resetLink: string) {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
