@@ -1,4 +1,10 @@
 import nodemailer from "nodemailer";
+import dns from "dns";
+
+// Force IPv4 resolution to prevent ENETUNREACH errors on platforms like Render 
+// that might have IPv6 interfaces without internet routing
+dns.setDefaultResultOrder('ipv4first');
+
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
