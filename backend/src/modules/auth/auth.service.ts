@@ -155,7 +155,10 @@ export const authService = {
 
     const resetLink = `${process.env.API_URL || "https://smart-expense-api-16xp.onrender.com/api/v1"}/auth/reset-password?token=${token}`;
     
-    await sendResetPasswordEmail(user.email, resetLink);
+    // Send email asynchronously so the mobile app doesn't timeout waiting for SMTP
+    sendResetPasswordEmail(user.email, resetLink).catch(err => {
+      console.error("[Email Error] Failed to send password reset email:", err);
+    });
   },
 
   async resetPassword(token: string, newPassword: string) {
