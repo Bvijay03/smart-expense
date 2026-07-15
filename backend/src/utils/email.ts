@@ -14,6 +14,11 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  // Explicitly force IPv4 connection for the socket to bypass Render IPv6 routing issues
+  tls: {
+    rejectUnauthorized: false
+  },
+  family: 4,
 });
 
 export async function sendResetPasswordEmail(to: string, resetLink: string) {
