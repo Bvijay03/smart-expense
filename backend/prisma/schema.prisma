@@ -45,8 +45,8 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
-  resetToken    String?   @map("reset_token")
-  resetTokenExp DateTime? @map("reset_token_exp")
+  securityQuestion String?   @map("security_question")
+  securityAnswer   String?   @map("security_answer")
 
   refreshTokens     RefreshToken[]
   expenses          Expense[]

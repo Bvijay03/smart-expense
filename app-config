@@ -1,0 +1,37 @@
+Using app configuration: {
+    "name": "Smart Expense",
+    "slug": "smart-expense",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+        "supportsTablet": true
+    },
+    "android": {
+        "package": "com.smartexpense.app",
+        "adaptiveIcon": {
+            "backgroundColor": "#E6F4FE",
+            "foregroundImage": "./assets/android-icon-foreground.png",
+            "backgroundImage": "./assets/android-icon-background.png",
+            "monochromeImage": "./assets/android-icon-monochrome.png"
+        }
+    },
+    "web": {
+        "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+        "expo-secure-store"
+    ],
+    "extra": {
+        "apiUrl": "https://smart-expense-api-16xp.onrender.com/api/v1",
+        "eas": {
+            "projectId": "21294e33-3174-4324-bd39-5837b4b87f6e"
+        }
+    },
+    "platforms": [
+        "ios",
+        "android"
+    ]
+}

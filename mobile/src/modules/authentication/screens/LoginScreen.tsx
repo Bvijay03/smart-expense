@@ -22,9 +22,9 @@ import { spacing } from "@/shared/theme";
 import { AuthStackParamList } from "@/shared/navigation/types";
 
 const schema = z.object({
-  email: z.email(),
-  password: z.string().min(1, "Password is required"),
-  rememberMe: z.boolean().default(true),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  rememberMe: z.boolean(),
 });
 
 type FormData = z.infer<typeof schema>;

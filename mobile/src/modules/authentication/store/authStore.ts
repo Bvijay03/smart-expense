@@ -10,10 +10,11 @@ interface AuthState {
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, securityQuestion?: string, securityAnswer?: string) => Promise<void>;
   logout: () => Promise<void>;
   restoreSession: () => Promise<void>;
-  forgotPassword: (email: string) => Promise<void>;
+  getSecurityQuestion: (email: string) => Promise<string>;
+  resetPasswordWithSecurity: (email: string, securityAnswer: string, newPassword: string) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -32,11 +33,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ user, isAuthenticated: true });
   },
 
-  async register(name, email, password) {
+  async register(name, email, password, securityQuestion, securityAnswer) {
     const { data } = await api.post("/auth/register", {
       name,
       email,
       password,
+      securityQuestion,
+      securityAnswer,
     });
     const { user, accessToken, refreshToken } = data.data;
     // Default to remember me on register
@@ -70,7 +73,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  async forgotPassword(email: string) {
-    await api.post("/auth/forgot-password", { email });
+  async getSecurityQuestion(email: string) {
+    const { data } = await api.post("/auth/forgot-password/question", { email });
+    return data.data.securityQuestion;
+  },
+
+  async resetPasswordWithSecurity(email: string, securityAnswer: string, newPassword: string) {
+    await api.post("/auth/forgot-password/reset", { email, securityAnswer, newPassword });
   }
 }));

@@ -7,7 +7,7 @@ export const authRepository = {
     });
   },
 
-  createUser(data: { email: string; passwordHash: string; name: string }) {
+  createUser(data: { email: string; passwordHash: string; name: string; securityQuestion?: string; securityAnswer?: string }) {
     return prisma.user.create({ data });
   },
 
@@ -46,13 +46,4 @@ export const authRepository = {
     });
   },
 
-  findUserByResetToken(token: string) {
-    return prisma.user.findFirst({
-      where: { 
-        resetToken: token,
-        resetTokenExp: { gt: new Date() },
-        deletedAt: null
-      },
-    });
-  },
 };

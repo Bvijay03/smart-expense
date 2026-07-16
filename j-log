@@ -1,0 +1,9 @@
+Starting Metro Bundler
+Android ./index.ts ▓▓▓░░░░░░░░░░░░░ 23.5% (130/268)
+Android ./index.ts ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 70.3% (517/664)
+Android ./index.ts ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 73.0% (775/949)
+Android ./index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.3% (1224/1275)
+Android Bundled 14627ms index.ts (1288 modules)
+Writing bundle output to: /tmp/m39laputqdt/index.js
+Copying 38 asset files
+Done writing bundle output

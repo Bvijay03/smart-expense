@@ -13,9 +13,7 @@ import {
   verifyRefreshToken,
 } from "@/utils/jwt";
 import { authRepository } from "./auth.repository";
-import { LoginInput, RegisterInput, ForgotPasswordInput } from "./auth.schema";
-import crypto from "crypto";
-import { sendResetPasswordEmail } from "@/utils/email";
+import { LoginInput, RegisterInput, ForgotPasswordInput, SecurityResetInput } from "./auth.schema";
 
 function sanitizeUser(user: {
   id: string;
@@ -61,6 +59,8 @@ export const authService = {
       email: input.email,
       passwordHash,
       name: input.name,
+      securityQuestion: input.securityQuestion,
+      securityAnswer: input.securityAnswer ? input.securityAnswer.trim().toLowerCase() : undefined,
     });
 
     const tokens = await issueTokens(user);
@@ -138,42 +138,29 @@ export const authService = {
 
   async forgotPassword(input: ForgotPasswordInput) {
     const user = await authRepository.findUserByEmail(input.email);
-    if (!user) {
-      // Do not reveal if user exists or not for security reasons
-      return;
+    if (!user || !user.securityQuestion) {
+      throw new AppError(404, "USER_NOT_FOUND", "No account found or no security question set for this email.");
     }
     
-    // Generate secure token
-    const token = crypto.randomBytes(32).toString("hex");
-    const expiry = new Date();
-    expiry.setHours(expiry.getHours() + 1);
-
-    await authRepository.updateUser(user.id, {
-      resetToken: token,
-      resetTokenExp: expiry,
-    });
-
-    const resetLink = `${process.env.API_URL || "https://smart-expense-api-16xp.onrender.com/api/v1"}/auth/reset-password?token=${token}`;
-    
-    // Send email asynchronously so the mobile app doesn't timeout waiting for SMTP
-    sendResetPasswordEmail(user.email, resetLink).catch(err => {
-      console.error("[Email Error] Failed to send password reset email:", err);
-    });
+    return { securityQuestion: user.securityQuestion };
   },
 
-  async resetPassword(token: string, newPassword: string) {
-    const user = await authRepository.findUserByResetToken(token);
+  async resetPassword(input: SecurityResetInput) {
+    const user = await authRepository.findUserByEmail(input.email);
     
-    if (!user) {
-      throw new AppError(400, "INVALID_TOKEN", "Invalid or expired password reset token.");
+    if (!user || !user.securityAnswer) {
+      throw new AppError(400, "INVALID_REQUEST", "Cannot reset password for this user.");
     }
 
-    const passwordHash = await hashPassword(newPassword);
+    const providedAnswer = input.securityAnswer.trim().toLowerCase();
+    if (providedAnswer !== user.securityAnswer) {
+      throw new AppError(401, "INVALID_ANSWER", "Incorrect security answer.");
+    }
+
+    const passwordHash = await hashPassword(input.newPassword);
 
     await authRepository.updateUser(user.id, {
       passwordHash,
-      resetToken: null,
-      resetTokenExp: null,
     });
     
     // Invalidate all active sessions by clearing refresh tokens

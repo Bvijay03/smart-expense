@@ -24,6 +24,8 @@ const schema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.email(),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  securityQuestion: z.string().min(5, "Security question must be at least 5 characters"),
+  securityAnswer: z.string().min(1, "Answer is required"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -35,13 +37,13 @@ export function RegisterScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", password: "" },
+    defaultValues: { name: "", email: "", password: "", securityQuestion: "", securityAnswer: "" },
   });
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      await register(data.name, data.email, data.password);
+      await register(data.name, data.email, data.password, data.securityQuestion, data.securityAnswer);
     } catch (err) {
       Alert.alert("Registration failed", getErrorMessage(err));
     } finally {
@@ -88,6 +90,30 @@ export function RegisterScreen({ navigation }: Props) {
               onChangeText={onChange}
               secureTextEntry
               error={errors.password?.message}
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="securityQuestion"
+          render={({ field: { onChange, value } }) => (
+            <Input
+              label="Security Question (e.g. First pet's name?)"
+              value={value}
+              onChangeText={onChange}
+              error={errors.securityQuestion?.message}
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="securityAnswer"
+          render={({ field: { onChange, value } }) => (
+            <Input
+              label="Answer"
+              value={value}
+              onChangeText={onChange}
+              error={errors.securityAnswer?.message}
             />
           )}
         />
