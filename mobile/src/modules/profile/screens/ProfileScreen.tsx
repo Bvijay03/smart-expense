@@ -22,12 +22,28 @@ export function ProfileScreen() {
 
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(user?.name ?? "");
+  
+  const [editingSecurity, setEditingSecurity] = useState(false);
+  const [securityQuestion, setSecurityQuestion] = useState("");
+  const [securityAnswer, setSecurityAnswer] = useState("");
 
   const updateName = useMutation({
     mutationFn: (name: string) => api.patch("/users/me", { name }),
     onSuccess: (res) => {
       setUser({ ...user!, name: res.data.data.name });
       setEditingName(false);
+    },
+    onError: (err) => Alert.alert("Error", getErrorMessage(err)),
+  });
+
+  const updateSecurity = useMutation({
+    mutationFn: (data: { securityQuestion: string, securityAnswer: string }) => 
+      api.put("/auth/security-question", data),
+    onSuccess: () => {
+      setEditingSecurity(false);
+      setSecurityQuestion("");
+      setSecurityAnswer("");
+      Alert.alert("Success", "Security question updated.");
     },
     onError: (err) => Alert.alert("Error", getErrorMessage(err)),
   });
@@ -82,6 +98,46 @@ export function ProfileScreen() {
         {/* Email (read-only) */}
         <Text style={[styles.label, { color: colors.textSecondary, marginTop: spacing.md }]}>Email</Text>
         <Text style={[styles.value, { color: colors.text }]}>{user?.email}</Text>
+        
+        {/* Security Question */}
+        <Text style={[styles.label, { color: colors.textSecondary, marginTop: spacing.md }]}>Security Question</Text>
+        {editingSecurity ? (
+          <View style={styles.securityEditContainer}>
+            <TextInput
+              style={[styles.nameInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background, marginBottom: 8 }]}
+              placeholder="New Security Question"
+              placeholderTextColor={colors.textSecondary}
+              value={securityQuestion}
+              onChangeText={setSecurityQuestion}
+            />
+            <TextInput
+              style={[styles.nameInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background, marginBottom: 8 }]}
+              placeholder="Security Answer"
+              placeholderTextColor={colors.textSecondary}
+              value={securityAnswer}
+              onChangeText={setSecurityAnswer}
+            />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Button 
+                title="Save" 
+                onPress={() => updateSecurity.mutate({ securityQuestion: securityQuestion.trim(), securityAnswer: securityAnswer.trim() })}
+                style={{ flex: 1 }}
+                loading={updateSecurity.isPending}
+              />
+              <Button 
+                title="Cancel" 
+                variant="secondary" 
+                onPress={() => { setEditingSecurity(false); setSecurityQuestion(""); setSecurityAnswer(""); }}
+                style={{ flex: 1 }}
+              />
+            </View>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.nameRow} onPress={() => setEditingSecurity(true)}>
+            <Text style={[styles.value, { color: colors.text, fontSize: 14 }]}>Update Security Question...</Text>
+            <Ionicons name="pencil-outline" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
       </Card>
 
       {/* Quick Actions */}
@@ -128,7 +184,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 8,
+  },
+  securityEditContainer: {
+    marginTop: 8,
+    flexDirection: 'column'
   },
   iconBtn: {
     width: 34, height: 34, borderRadius: 8,

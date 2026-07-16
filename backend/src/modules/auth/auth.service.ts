@@ -13,7 +13,7 @@ import {
   verifyRefreshToken,
 } from "@/utils/jwt";
 import { authRepository } from "./auth.repository";
-import { LoginInput, RegisterInput, ForgotPasswordInput, SecurityResetInput } from "./auth.schema";
+import { LoginInput, RegisterInput, ForgotPasswordInput, SecurityResetInput, UpdateSecurityInput } from "./auth.schema";
 
 function sanitizeUser(user: {
   id: string;
@@ -165,5 +165,17 @@ export const authService = {
     
     // Invalidate all active sessions by clearing refresh tokens
     await authRepository.deleteAllRefreshTokens(user.id);
+  },
+
+  async updateSecurityQuestion(userId: string, input: UpdateSecurityInput) {
+    const user = await authRepository.findUserById(userId);
+    if (!user) {
+      throw new AppError(404, "USER_NOT_FOUND", "User not found");
+    }
+
+    await authRepository.updateUser(userId, {
+      securityQuestion: input.securityQuestion,
+      securityAnswer: input.securityAnswer.trim().toLowerCase(),
+    });
   },
 };

@@ -64,5 +64,14 @@ export const authController = {
     } catch (err) {
       next(err);
     }
+  },
+
+  async updateSecurityQuestion(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      await authService.updateSecurityQuestion(req.user!.userId, req.body);
+      res.json({ data: { message: "Security question updated successfully." } });
+    } catch (err) {
+      next(err);
+    }
   }
 };

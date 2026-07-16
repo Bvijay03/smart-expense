@@ -27,8 +27,14 @@ export const securityResetSchema = z.object({
   newPassword: z.string().min(8, "Password must be at least 8 characters"),
 });
 
+export const updateSecuritySchema = z.object({
+  securityQuestion: z.string().min(5, "Security question must be at least 5 characters"),
+  securityAnswer: z.string().min(1, "Security answer is required"),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RefreshInput = z.infer<typeof refreshSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type SecurityResetInput = z.infer<typeof securityResetSchema>;
+export type UpdateSecurityInput = z.infer<typeof updateSecuritySchema>;
