@@ -145,12 +145,13 @@ export function SettlementsScreen({ route }: Props) {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.personName, { color: colors.text }]}>{b.name}</Text>
                 <Text style={[styles.personSub, { color: colors.textSecondary }]}>
-                  Paid ₹{b.paid.toFixed(2)} · Share ₹{b.owed.toFixed(2)}
+                  Total Paid: ₹{b.paid.toFixed(2)}
                 </Text>
-              </View>
-              <View style={[styles.netBadge, { backgroundColor: isPositive ? colors.success + "22" : colors.error + "22" }]}>
-                <Text style={[styles.netText, { color: isPositive ? colors.success : colors.error }]}>
-                  {isPositive ? "+" : ""}₹{b.net.toFixed(2)}
+                <Text style={[styles.personSub, { color: colors.textSecondary }]}>
+                  Total Share: ₹{b.owed.toFixed(2)}
+                </Text>
+                <Text style={[styles.personSub, { color: isPositive ? colors.success : colors.error, fontWeight: "600", marginTop: 4 }]}>
+                  {isPositive ? `Receives from group: ₹${b.net.toFixed(2)}` : `Owes to group: ₹${Math.abs(b.net).toFixed(2)}`}
                 </Text>
               </View>
             </View>
