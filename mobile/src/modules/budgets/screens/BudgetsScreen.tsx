@@ -6,7 +6,9 @@ import {
   Text,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from "react-native";
+import { useState, useCallback } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
@@ -37,6 +39,13 @@ export function BudgetsScreen() {
     queryFn: () => budgetService.list().then((r) => r.data.data),
   });
 
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
+
   const deleteBudget = useMutation({
     mutationFn: (id: string) => budgetService.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["budgets"] }),
@@ -60,6 +69,14 @@ export function BudgetsScreen() {
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[colors.primary]}
+          tintColor={colors.primary}
+        />
+      }
     >
       <View style={styles.headerRow}>
         <ScreenHeader title="Budgets" subtitle="Monthly spending limits" />

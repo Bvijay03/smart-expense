@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Alert,
   Modal,
@@ -8,6 +8,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -57,6 +58,17 @@ export function GroupDetailScreen({ route, navigation }: Props) {
     ),
     refetchInterval: 15000, // poll every 15s so admin sees new requests
   });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      group.refetch(),
+      expenses.refetch(),
+      joinRequests.refetch()
+    ]);
+    setRefreshing(false);
+  }, [group, expenses, joinRequests]);
 
   const addMember = useMutation({
     mutationFn: (name: string) => groupService.addMember(groupId, name),
@@ -138,6 +150,14 @@ export function GroupDetailScreen({ route, navigation }: Props) {
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[colors.primary]}
+          tintColor={colors.primary}
+        />
+      }
     >
       {/* ── Header: centered group name + action icons ── */}
       <View style={styles.header}>

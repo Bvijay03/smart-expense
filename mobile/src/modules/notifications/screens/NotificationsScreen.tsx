@@ -5,7 +5,9 @@ import {
   Text,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from "react-native";
+import { useState, useCallback } from "react";
 import { notificationService } from "@/shared/services/modules";
 import { Card, ScreenHeader } from "@/shared/components/Card";
 import { Button } from "@/shared/components/Button";
@@ -23,6 +25,13 @@ export function NotificationsScreen() {
     queryKey: ["notifications"],
     queryFn: () => notificationService.list().then((r) => r.data.data),
   });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const markAllRead = useMutation({
     mutationFn: notificationService.markAllRead,
@@ -55,6 +64,14 @@ export function NotificationsScreen() {
           data={data}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
           renderItem={({ item }) => (
             <Card
               style={{

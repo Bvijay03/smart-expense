@@ -5,7 +5,9 @@ import {
   Text,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from "react-native";
+import { useState, useCallback } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
@@ -30,6 +32,13 @@ export function GroupExpensesScreen({ route, navigation }: Props) {
     queryKey: ["shared-expenses", groupId],
     queryFn: () => sharedExpenseService.list(groupId).then((r) => r.data.data),
   });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await expenses.refetch();
+    setRefreshing(false);
+  }, [expenses]);
 
   const deleteExpense = useMutation({
     mutationFn: (expenseId: string) => sharedExpenseService.delete(groupId, expenseId),
@@ -72,6 +81,14 @@ export function GroupExpensesScreen({ route, navigation }: Props) {
         data={expenses.data}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
         ListEmptyComponent={
           <Card>
             <View style={styles.emptyState}>

@@ -9,7 +9,9 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from "react-native";
+import { useCallback } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
@@ -33,6 +35,13 @@ export function GroupsScreen() {
     queryKey: ["groups"],
     queryFn: () => groupService.list().then((r) => r.data.data),
   });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const handleJoinByCode = async () => {
     const code = inviteCode.trim().toUpperCase();
@@ -96,6 +105,14 @@ export function GroupsScreen() {
           data={data}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
           renderItem={({ item }) => {
             const net = item.userNetBalance ?? 0;
             const contribution = item.userContribution ?? 0;

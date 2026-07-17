@@ -8,7 +8,9 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from "react-native";
+import { useCallback } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
@@ -43,6 +45,16 @@ export function SettlementsScreen({ route }: Props) {
     queryKey: ["settlements", groupId],
     queryFn: () => settlementService.list(groupId).then((r) => r.data.data),
   });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      balances.refetch(),
+      settlements.refetch()
+    ]);
+    setRefreshing(false);
+  }, [balances, settlements]);
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["settlements", groupId] });
@@ -103,6 +115,14 @@ export function SettlementsScreen({ route }: Props) {
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[colors.primary]}
+          tintColor={colors.primary}
+        />
+      }
     >
       <ScreenHeader title="Settlements" subtitle={groupName} />
 

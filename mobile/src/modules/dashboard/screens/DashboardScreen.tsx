@@ -5,7 +5,9 @@ import {
   Text,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from "react-native";
+import { useState, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -38,6 +40,17 @@ export function DashboardScreen() {
     queryFn: () => notificationService.list().then((r) => r.data.data),
   });
 
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      summary.refetch(),
+      budgets.refetch(),
+      notifications.refetch(),
+    ]);
+    setRefreshing(false);
+  }, [summary, budgets, notifications]);
+
   if (summary.isLoading) return <LoadingState />;
   if (summary.isError) {
     return <ErrorState message="Failed to load dashboard" onRetry={summary.refetch} />;
@@ -50,6 +63,14 @@ export function DashboardScreen() {
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[colors.primary]}
+          tintColor={colors.primary}
+        />
+      }
     >
       <ScreenHeader
         title={`Hello, ${user?.name?.split(" ")[0] ?? "there"}`}

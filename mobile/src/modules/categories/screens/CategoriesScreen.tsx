@@ -7,7 +7,9 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from "react-native";
+import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { categoryService } from "@/shared/services/modules";
@@ -33,6 +35,13 @@ export function CategoriesScreen() {
     queryKey: ["categories"],
     queryFn: () => categoryService.list().then((r) => r.data.data),
   });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const addCategory = useMutation({
     mutationFn: () => categoryService.create({ name: newName.trim(), color: selectedColor }),
@@ -66,6 +75,14 @@ export function CategoriesScreen() {
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[colors.primary]}
+          tintColor={colors.primary}
+        />
+      }
     >
       <ScreenHeader title="Categories" subtitle="Manage expense categories" />
 

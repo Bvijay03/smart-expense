@@ -11,7 +11,9 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from "react-native";
+import { useCallback } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
@@ -43,6 +45,16 @@ export function ExpensesScreen() {
     queryKey: ["groups"],
     queryFn: () => groupService.list().then((r) => r.data.data),
   });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      refetch(),
+      groupsQuery.refetch()
+    ]);
+    setRefreshing(false);
+  }, [refetch, groupsQuery]);
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => expenseService.delete(id),
@@ -186,6 +198,14 @@ export function ExpensesScreen() {
           data={filtered}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
           renderItem={({ item }) => (
             <Card>
               <TouchableOpacity style={styles.row} onLongPress={() => showActions(item)} activeOpacity={0.7}>
