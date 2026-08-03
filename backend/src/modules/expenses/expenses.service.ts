@@ -69,7 +69,7 @@ async function checkBudgetAlerts(userId: string, expenseDate: Date) {
 export const expensesService = {
   async create(userId: string, input: CreateExpenseInput) {
     const expense = await expensesRepository.create({ userId, ...input });
-    checkBudgetAlerts(userId, input.expenseDate);
+    void checkBudgetAlerts(userId, input.expenseDate);
     return formatExpense(expense);
   },
 
@@ -96,7 +96,7 @@ export const expensesService = {
     const existing = await expensesRepository.findById(id, userId);
     if (!existing) throw new AppError(404, "NOT_FOUND", "Expense not found");
     const updated = await expensesRepository.update(id, input);
-    checkBudgetAlerts(userId, updated.expenseDate);
+    void checkBudgetAlerts(userId, updated.expenseDate);
     return formatExpense(updated);
   },
 

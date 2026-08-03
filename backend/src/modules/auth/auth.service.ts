@@ -55,12 +55,16 @@ export const authService = {
     }
 
     const passwordHash = await hashPassword(input.password);
+    const securityAnswerHash = input.securityAnswer 
+      ? await hashPassword(input.securityAnswer.trim().toLowerCase()) 
+      : undefined;
+
     const user = await authRepository.createUser({
       email: input.email,
       passwordHash,
       name: input.name,
       securityQuestion: input.securityQuestion,
-      securityAnswer: input.securityAnswer ? input.securityAnswer.trim().toLowerCase() : undefined,
+      securityAnswer: securityAnswerHash,
     });
 
     const tokens = await issueTokens(user);
@@ -153,7 +157,8 @@ export const authService = {
     }
 
     const providedAnswer = input.securityAnswer.trim().toLowerCase();
-    if (providedAnswer !== user.securityAnswer) {
+    const validAnswer = await comparePassword(providedAnswer, user.securityAnswer);
+    if (!validAnswer) {
       throw new AppError(401, "INVALID_ANSWER", "Incorrect security answer.");
     }
 
@@ -173,9 +178,11 @@ export const authService = {
       throw new AppError(404, "USER_NOT_FOUND", "User not found");
     }
 
+    const securityAnswerHash = await hashPassword(input.securityAnswer.trim().toLowerCase());
+
     await authRepository.updateUser(userId, {
       securityQuestion: input.securityQuestion,
-      securityAnswer: input.securityAnswer.trim().toLowerCase(),
+      securityAnswer: securityAnswerHash,
     });
   },
 };

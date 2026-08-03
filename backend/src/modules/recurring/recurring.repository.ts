@@ -36,11 +36,12 @@ export const recurringRepository = {
     return prisma.recurringExpense.delete({ where: { id } });
   },
 
-  findDueToday() {
+  findDueToday(userId: string) {
     const today = new Date();
     const dayOfMonth = today.getDate();
     return prisma.recurringExpense.findMany({
       where: {
+        userId,
         isActive: true,
         dayOfMonth,
         OR: [

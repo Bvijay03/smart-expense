@@ -61,8 +61,8 @@ export const recurringService = {
     await recurringRepository.delete(id);
   },
 
-  async processAll() {
-    const dueItems = await recurringRepository.findDueToday();
+  async processForUser(userId: string) {
+    const dueItems = await recurringRepository.findDueToday(userId);
     let created = 0;
 
     for (const item of dueItems) {

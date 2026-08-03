@@ -23,6 +23,30 @@ export const settlementsRepository = {
     });
   },
 
+  replacePendingForGroup(
+    groupId: string,
+    settlements: { fromUserId: string; toUserId: string; amount: number }[],
+  ) {
+    return prisma.$transaction([
+      prisma.settlement.deleteMany({
+        where: { groupId, status: SettlementStatus.PENDING },
+      }),
+      ...(settlements.length > 0
+        ? [
+            prisma.settlement.createMany({
+              data: settlements.map((s) => ({
+                groupId,
+                fromUserId: s.fromUserId,
+                toUserId: s.toUserId,
+                amount: s.amount,
+                status: SettlementStatus.PENDING,
+              })),
+            }),
+          ]
+        : []),
+    ]);
+  },
+
   findByGroup(groupId: string) {
     return prisma.settlement.findMany({
       where: { groupId },

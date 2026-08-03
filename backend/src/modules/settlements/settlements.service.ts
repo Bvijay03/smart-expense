@@ -49,11 +49,7 @@ export const settlementsService = {
     const nets = computeNetBalances(userIds, paid, owed);
     const suggestions = minCashFlow(nets);
 
-    await settlementsRepository.deletePendingByGroup(groupId);
-
-    if (suggestions.length > 0) {
-      await settlementsRepository.createMany(groupId, suggestions);
-    }
+    await settlementsRepository.replacePendingForGroup(groupId, suggestions);
   },
 
   async getBalances(userId: string, groupId: string) {

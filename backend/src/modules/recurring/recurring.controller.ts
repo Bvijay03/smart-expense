@@ -51,9 +51,9 @@ export const recurringController = {
     }
   },
 
-  async process(_req: AuthRequest, res: Response, next: NextFunction) {
+  async process(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const result = await recurringService.processAll();
+      const result = await recurringService.processForUser(req.user!.userId);
       res.json({ data: result });
     } catch (err) {
       next(err);
