@@ -11,7 +11,7 @@
 |------|-------------|
 | `README.md` | Full project documentation — setup steps, API reference, environment variables, feature list, future roadmap |
 | `docker-compose.yml` | Starts a local PostgreSQL database container for development |
-| `render.yaml` | Tells Render.com how to deploy the backend — Docker build, environment variable declarations, health check path |
+| `render.yaml` | Tells Render.com how to deploy both the backend (Docker) and the website (Static Site) — environment variable declarations, health check path, static publish directory |
 | `to implement` | Running task tracker — what features are done, in progress, or planned |
 
 ---
@@ -157,9 +157,9 @@
 
 | File | Purpose | What it can do |
 |------|---------|----------------|
-| `recurring.router.ts` | Route definitions | List, create, update, delete recurring expenses. Toggle active/inactive. POST /process to trigger creation for today |
-| `recurring.service.ts` | Business logic | CRUD for recurring expense schedules. processAll finds all active recurring expenses due today (not yet created this month), creates a personal expense for each, marks them processed |
-| `recurring.repository.ts` | Database queries | Find due-today items (by day of month, not yet created this calendar month), mark created |
+| `recurring.router.ts` | Route definitions | List, create, update, delete recurring expenses. Toggle active/inactive. POST /process to trigger creation for the authenticated user today |
+| `recurring.service.ts` | Business logic | CRUD for recurring expense schedules. processForUser finds all active recurring expenses due today for the given user (not yet created this month), creates a personal expense for each, marks them processed |
+| `recurring.repository.ts` | Database queries | Find due-today items for a specific user (by day of month, not yet created this calendar month), mark created |
 
 ---
 
@@ -311,3 +311,21 @@
 | `mobile/tsconfig.json` | TypeScript config for the mobile app — enables @/ path alias pointing to src/ |
 | `backend/tsconfig.json` | TypeScript config for backend — compiles to dist/, enables @/ path alias pointing to src/ |
 | `backend/prisma/schema.prisma` | Single source of truth for the entire database structure |
+
+---
+
+## WEBSITE (`website/`)
+
+### Purpose
+Public-facing landing page and APK distribution hub for the Smart Expense app.
+
+| File | What it does |
+|------|-------------|
+| `index.html` | Entry HTML — includes SEO meta tags (title, description, theme-color) |
+| `src/main.tsx` | React app entry point — renders `<App />` into the root div |
+| `src/App.tsx` | **Single-page layout.** Contains four sections: Navbar (fixed, glass-blur), Hero (title + CTA), Features (glass cards for Group Splitting, Settlements, Budgets, Security), Download (APK link + install instructions), Footer |
+| `src/index.css` | **Design system.** Dark theme, neon green primary color, glassmorphism panels, responsive breakpoints, fade-in animations, button styles |
+| `public/smart-expense-latest.apk` | **APK hosting.** Place the latest build APK here — the Download button links directly to this file |
+
+### Deployment
+Configured as a **Render Static Site** in `render.yaml`. Build command: `npm install && npm run build`. Publish directory: `dist`.

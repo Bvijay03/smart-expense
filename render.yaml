@@ -20,13 +20,11 @@ services:
       - key: CORS_ORIGIN
         value: "*"
 
-  - type: web
+  - type: static
     name: smart-expense-website
-    runtime: static
-    rootDir: ./website
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
-    plan: free
+    rootDir: ./website
     headers:
       - path: /*
         name: X-Frame-Options
