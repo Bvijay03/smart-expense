@@ -20,8 +20,9 @@ services:
       - key: CORS_ORIGIN
         value: "*"
 
-  - type: static
+  - type: web
     name: smart-expense-website
+    runtime: static
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     rootDir: ./website
