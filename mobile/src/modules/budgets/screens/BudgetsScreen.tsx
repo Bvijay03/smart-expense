@@ -13,7 +13,8 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { budgetService } from "@/shared/services/modules";
-import { Card, ScreenHeader } from "@/shared/components/Card";
+import { GlassCard } from "@/shared/components/GlassCard";
+import { ScreenHeader } from "@/shared/components/Card";
 import { LoadingState } from "@/shared/components/LoadingState";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { ErrorState } from "@/shared/components/ErrorState";
@@ -116,7 +117,7 @@ export function BudgetsScreen() {
           const barColor = getProgressColor(percent, colors);
 
           return (
-            <Card key={budget.id}>
+            <GlassCard key={budget.id} intensity={25}>
               <View style={styles.budgetHeader}>
                 <View style={styles.budgetTitleRow}>
                   <View style={[styles.categoryIcon, { backgroundColor: barColor + "18" }]}>
@@ -168,13 +169,14 @@ export function BudgetsScreen() {
               </View>
 
               {/* Progress bar */}
-              <View style={[styles.progressBg, { backgroundColor: colors.border }]}>
+              <View style={styles.progressTrack}>
                 <View
                   style={[
                     styles.progressFill,
                     {
                       width: `${Math.min(percent, 100)}%`,
                       backgroundColor: barColor,
+                      shadowColor: barColor,
                     },
                   ]}
                 />
@@ -182,7 +184,7 @@ export function BudgetsScreen() {
               <Text style={[styles.percentText, { color: barColor }]}>
                 {percent}% used
               </Text>
-            </Card>
+            </GlassCard>
           );
         })
       )}
@@ -230,10 +232,20 @@ const styles = StyleSheet.create({
   // Amounts
   amountsRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: spacing.sm },
   amountLabel: { fontSize: 11, fontWeight: "500", marginBottom: 2 },
-  amountValue: { fontSize: 16, fontWeight: "700" },
+  amountValue: { fontSize: 16, fontWeight: "700", fontFamily: 'JetBrains Mono' },
 
   // Progress
-  progressBg: { height: 8, borderRadius: 4, overflow: "hidden" },
-  progressFill: { height: "100%", borderRadius: 4 },
+  progressTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+  },
   percentText: { fontSize: 12, fontWeight: "600", marginTop: 4, textAlign: "right" },
 });

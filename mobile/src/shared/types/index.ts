@@ -2,7 +2,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  avatarUrl: string | null;
+  avatarUrl?: string;
   createdAt: string;
 }
 
@@ -59,11 +59,11 @@ export interface SharedExpense {
   category: string;
   expenseDate: string;
   splitType: "EQUAL" | "EXACT" | "PERCENTAGE";
-  paidBy: Pick<User, "id" | "name" | "email">;
+  paidBy: Pick<User, "id" | "name" | "email" | "avatarUrl">;
   splits: {
     userId: string;
     amountOwed: number;
-    user: Pick<User, "id" | "name" | "email">;
+    user: Pick<User, "id" | "name" | "email" | "avatarUrl">;
   }[];
 }
 
@@ -83,8 +83,8 @@ export interface Settlement {
   amount: number;
   status: "PENDING" | "SETTLED";
   settledAt: string | null;
-  fromUser: Pick<User, "id" | "name" | "email">;
-  toUser: Pick<User, "id" | "name" | "email">;
+  fromUser: Pick<User, "id" | "name" | "email" | "avatarUrl">;
+  toUser: Pick<User, "id" | "name" | "email" | "avatarUrl">;
 }
 
 export interface Budget {

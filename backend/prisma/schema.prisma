@@ -36,6 +36,12 @@ enum NotificationType {
   GENERAL
 }
 
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
@@ -61,6 +67,8 @@ model User {
   categories        Category[]
   recurringExpenses RecurringExpense[]
   joinRequests      JoinRequest[]
+  friendshipsInitiated Friendship[] @relation("FriendshipInitiator")
+  friendshipsReceived  Friendship[] @relation("FriendshipReceiver")
 
   @@index([email])
   @@map("users")
@@ -112,6 +120,7 @@ model Group {
   sharedExpenses SharedExpense[]
   settlements    Settlement[]
   joinRequests   JoinRequest[]
+  friendships    Friendship[]
 
   @@map("groups")
 }
@@ -261,4 +270,21 @@ model JoinRequest {
 
   @@unique([groupId, userId])
   @@map("join_requests")
+}
+
+model Friendship {
+  id          String              @id @default(uuid())
+  initiatorId String              @map("initiator_id")
+  receiverId  String              @map("receiver_id")
+  status      FriendRequestStatus @default(PENDING)
+  groupId     String?             @map("group_id")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  initiator User   @relation("FriendshipInitiator", fields: [initiatorId], references: [id])
+  receiver  User   @relation("FriendshipReceiver", fields: [receiverId], references: [id])
+  group     Group? @relation(fields: [groupId], references: [id])
+
+  @@unique([initiatorId, receiverId])
+  @@map("friendships")
 }

@@ -6,7 +6,7 @@ import { DashboardScreen } from "@/modules/dashboard/screens/DashboardScreen";
 import { ExpensesScreen } from "@/modules/expenses/screens/ExpensesScreen";
 import { GroupsScreen } from "@/modules/groups/screens/GroupsScreen";
 import { AnalyticsScreen } from "@/modules/analytics/screens/AnalyticsScreen";
-import { NotificationsScreen } from "@/modules/notifications/screens/NotificationsScreen";
+import { ProfileScreen } from "@/modules/profile/screens/ProfileScreen";
 import { notificationService } from "@/shared/services/modules";
 import { useThemeStore } from "@/shared/hooks/useTheme";
 import { MainTabParamList } from "./types";
@@ -27,36 +27,58 @@ export function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
+          position: "absolute",
+          bottom: 24,
+          left: 20,
+          right: 20,
+          elevation: 0,
+          backgroundColor: "rgba(17, 19, 24, 0.85)",
+          borderRadius: 32,
+          height: 64,
+          borderWidth: 1,
+          borderColor: "rgba(255, 255, 255, 0.12)",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.5,
+          shadowRadius: 10,
         },
-        tabBarIcon: ({ color, size, focused }) => {
+        tabBarIcon: ({ size, focused }) => {
           const icons: Record<string, [keyof typeof Ionicons.glyphMap, keyof typeof Ionicons.glyphMap]> = {
             Dashboard:     ["home",         "home-outline"],
             Expenses:      ["receipt",      "receipt-outline"],
             Groups:        ["people",       "people-outline"],
             Analytics:     ["bar-chart",    "bar-chart-outline"],
-            Notifications: ["notifications","notifications-outline"],
+            Profile:       ["person",       "person-outline"],
           };
           const [active, inactive] = icons[route.name] ?? ["ellipse", "ellipse-outline"];
           const iconName = focused ? active : inactive;
+          const color = focused ? colors.primary : colors.textSecondary;
 
-          if (route.name === "Notifications") {
-            return (
-              <View>
-                <Ionicons name={iconName} size={size} color={color} />
-                {unread > 0 && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{unread > 9 ? "9+" : unread}</Text>
-                  </View>
-                )}
-              </View>
-            );
-          }
-          return <Ionicons name={iconName} size={size} color={color} />;
+          const renderIcon = () => {
+            return <Ionicons name={iconName} size={24} color={color} />;
+          };
+
+          return (
+            <View style={{ alignItems: "center", justifyContent: "center", marginTop: 12 }}>
+              {renderIcon()}
+              {focused && (
+                <View style={{
+                  marginTop: 6,
+                  width: 4,
+                  height: 4,
+                  borderRadius: 2,
+                  backgroundColor: colors.primary,
+                  shadowColor: colors.primary,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 1,
+                  shadowRadius: 6,
+                  elevation: 5,
+                }} />
+              )}
+            </View>
+          );
         },
       })}
     >
@@ -64,11 +86,7 @@ export function MainTabs() {
       <Tab.Screen name="Expenses" component={ExpensesScreen} />
       <Tab.Screen name="Groups" component={GroupsScreen} />
       <Tab.Screen name="Analytics" component={AnalyticsScreen} />
-      <Tab.Screen
-        name="Notifications"
-        component={NotificationsScreen}
-        options={{ tabBarLabel: "Alerts" }}
-      />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }

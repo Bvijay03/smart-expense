@@ -180,3 +180,21 @@ export const recurringService = {
     return api.patch(`/recurring/${id}/toggle`);
   },
 };
+
+export const friendsService = {
+  getFriends() {
+    return api.get<{ data: any[] }>("/friends");
+  },
+  getRequests() {
+    return api.get<{ data: any[] }>("/friends/requests");
+  },
+  sendRequest(email: string) {
+    return api.post<{ data: any }>("/friends/request", { email });
+  },
+  acceptRequest(id: string) {
+    return api.post<{ data: any }>(`/friends/request/${id}/accept`);
+  },
+  rejectRequest(id: string) {
+    return api.post<{ data: any }>(`/friends/request/${id}/reject`);
+  },
+};

@@ -1,29 +1,37 @@
 export const lightColors = {
-  primary: "#4F46E5",
-  primaryDark: "#4338CA",
-  background: "#F8FAFC",
-  surface: "#FFFFFF",
-  text: "#0F172A",
-  textSecondary: "#64748B",
-  border: "#E2E8F0",
-  error: "#EF4444",
-  success: "#22C55E",
-  warning: "#F59E0B",
-  cardShadow: "rgba(15, 23, 42, 0.08)",
+  primary: "#00f5ff",
+  primaryDark: "#00c3cc",
+  background: "#EAECEF", // Dimmed background
+  surface: "#F2F4F7", // Dimmed surface
+  text: "#000000", // Darker text
+  textSecondary: "#374151", // Darker secondary text
+  border: "#D1D5DB",
+  error: "#ffb4ab",
+  success: "#39ff14",
+  warning: "#ff007f",
+  cardShadow: "rgba(0, 0, 0, 0.1)",
+  surfaceVariant: "#D1D5DB",
+  secondary: "#374151",
+  tertiary: "#6B7280",
+  onPrimary: "#FFFFFF",
 };
 
 export const darkColors = {
-  primary: "#818CF8",
-  primaryDark: "#6366F1",
-  background: "#0F172A",
-  surface: "#1E293B",
-  text: "#F8FAFC",
-  textSecondary: "#94A3B8",
-  border: "#334155",
-  error: "#F87171",
-  success: "#4ADE80",
-  warning: "#FBBF24",
-  cardShadow: "rgba(0, 0, 0, 0.3)",
+  primary: "#00f5ff",
+  primaryDark: "#00dce5",
+  background: "#111318",
+  surface: "rgba(255, 255, 255, 0.05)", // Glass effect base
+  text: "#e2e2e8",
+  textSecondary: "#b9caca",
+  border: "rgba(255, 255, 255, 0.12)", // Highlight edge
+  error: "#ffb4ab",
+  success: "#39ff14",
+  warning: "#ff007f",
+  cardShadow: "rgba(0, 0, 0, 0.4)",
+  surfaceVariant: "rgba(255, 255, 255, 0.08)",
+  secondary: "#b9caca",
+  tertiary: "#849495",
+  onPrimary: "#000000",
 };
 
 export const spacing = {
@@ -35,9 +43,9 @@ export const spacing = {
 };
 
 export const borderRadius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
+  sm: 8, // Standard component
+  md: 16, // Main dashboard cards
+  lg: 24, // Overlay modals
   full: 999,
 };
 

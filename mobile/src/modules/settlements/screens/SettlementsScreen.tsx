@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Alert,
   Modal,
@@ -9,28 +9,30 @@ import {
   TouchableOpacity,
   View,
   RefreshControl,
+  Image,
 } from "react-native";
-import { useCallback } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import { settlementService } from "@/shared/services/modules";
-import { Card, ScreenHeader } from "@/shared/components/Card";
-import { Button } from "@/shared/components/Button";
 import { LoadingState } from "@/shared/components/LoadingState";
 import { ErrorState } from "@/shared/components/ErrorState";
 import { getErrorMessage } from "@/shared/services/api";
-import { useTheme } from "@/shared/hooks/useTheme";
+import { useThemeStore } from "@/shared/hooks/useTheme";
 import { spacing } from "@/shared/theme";
 import { RootStackParamList } from "@/shared/navigation/types";
+import { useAuthStore } from "@/modules/authentication/store/authStore";
 import type { Settlement } from "@/shared/types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Settlements">;
 
 export function SettlementsScreen({ route }: Props) {
   const { groupId, groupName } = route.params;
-  const { colors } = useTheme();
+  const { colors } = useThemeStore();
   const queryClient = useQueryClient();
+  const navigation = useNavigation<any>();
+  const user = useAuthStore((s) => s.user);
 
   // Modal state
   const [settleModal, setSettleModal] = useState<Settlement | null>(null);
@@ -49,10 +51,7 @@ export function SettlementsScreen({ route }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([
-      balances.refetch(),
-      settlements.refetch()
-    ]);
+    await Promise.all([balances.refetch(), settlements.refetch()]);
     setRefreshing(false);
   }, [balances, settlements]);
 
@@ -107,184 +106,175 @@ export function SettlementsScreen({ route }: Props) {
     return <ErrorState message="Failed to load settlements" onRetry={balances.refetch} />;
   }
 
-  const totalPaid = (balances.data ?? []).reduce((s, b) => s + b.paid, 0);
-  const pendingSettlements = (settlements.data ?? []).filter((s) => s.status === "PENDING");
-  const settledSettlements = (settlements.data ?? []).filter((s) => s.status === "SETTLED");
+  const allSettlements = settlements.data ?? [];
+  const pendingSettlements = allSettlements.filter((s) => s.status === "PENDING");
+  
+  // Calculate current user's net balance
+  let userNetBalance = 0;
+  pendingSettlements.forEach((s) => {
+    if (s.toUserId === user?.id) userNetBalance += s.amount;
+    else if (s.fromUserId === user?.id) userNetBalance -= s.amount;
+  });
+
+  const balanceColor = userNetBalance > 0 ? colors.success : userNetBalance < 0 ? "#ffb1c4" : colors.text;
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          colors={[colors.primary]}
-          tintColor={colors.primary}
-        />
-      }
-    >
-      <ScreenHeader title="Settlements" subtitle={groupName} />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* TopAppBar */}
+      <View style={[styles.appBar, { backgroundColor: colors.surface + "E6", borderBottomColor: colors.border }]}>
+        <TouchableOpacity style={styles.appBarBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color={colors.textSecondary} />
+        </TouchableOpacity>
+        <Text style={[styles.appBarTitle, { color: colors.primary }]}>Settle Up</Text>
+        <View style={styles.appBarBtn} />
+      </View>
 
-      {/* Summary */}
-      <Card>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Group Summary</Text>
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: colors.primary }]}>₹{totalPaid.toFixed(2)}</Text>
-            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Total Spent</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: colors.text }]}>{balances.data?.length ?? 0}</Text>
-            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Members</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: pendingSettlements.length ? colors.error : colors.success }]}>
-              {pendingSettlements.length}
-            </Text>
-            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Pending</Text>
-          </View>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+      >
+        {/* Summary Header */}
+        <View style={[styles.summaryPanel, { borderColor: colors.border }]}>
+          <View style={styles.gradientOverlay} />
+          <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Total Balance</Text>
+          <Text 
+            style={[
+              styles.summaryValue, 
+              { color: balanceColor },
+              userNetBalance < 0 && styles.neonTextPink,
+              userNetBalance > 0 && styles.neonTextGreen
+            ]}
+          >
+            {userNetBalance < 0 ? "-" : userNetBalance > 0 ? "+" : ""}₹{Math.abs(userNetBalance).toFixed(2)}
+          </Text>
+          <TouchableOpacity 
+            style={[styles.settleAllBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+            onPress={() => {
+              // Just a stub for "Settle All" since we only have single settle API rn
+              Alert.alert("Info", "Select individual debts to settle them.");
+            }}
+          >
+            <Text style={[styles.settleAllText, { color: colors.background }]}>Settle All Debts</Text>
+          </TouchableOpacity>
         </View>
-      </Card>
 
-      {/* Per-person breakdown */}
-      <Text style={[styles.sectionTitle, { color: colors.text, marginTop: spacing.md }]}>Per Person</Text>
-      {balances.data?.map((b) => {
-        const isPositive = b.net >= 0;
-        const personOwes = pendingSettlements.filter((s) => s.fromUserId === b.userId);
-        const personGets = pendingSettlements.filter((s) => s.toUserId === b.userId);
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Group Balances</Text>
 
-        return (
-          <Card key={b.userId}>
-            <View style={styles.personHeader}>
-              <View style={[styles.avatar, { backgroundColor: colors.primary + "22" }]}>
-                <Text style={[styles.avatarText, { color: colors.primary }]}>
-                  {b.name.charAt(0).toUpperCase()}
-                </Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.personName, { color: colors.text }]}>{b.name}</Text>
-                <Text style={[styles.personSub, { color: colors.textSecondary }]}>
-                  Total Paid: ₹{b.paid.toFixed(2)}
-                </Text>
-                <Text style={[styles.personSub, { color: colors.textSecondary }]}>
-                  Total Share: ₹{b.owed.toFixed(2)}
-                </Text>
-                <Text style={[styles.personSub, { color: isPositive ? colors.success : colors.error, fontWeight: "600", marginTop: 4 }]}>
-                  {isPositive ? `Receives from group: ₹${b.net.toFixed(2)}` : `Owes to group: ₹${Math.abs(b.net).toFixed(2)}`}
-                </Text>
-              </View>
-            </View>
-
-            {/* What this person owes */}
-            {personOwes.length > 0 && (
-              <View style={[styles.debtContainer, { borderTopColor: colors.border }]}>
-                {personOwes.map((s) => (
-                  <View key={s.id} style={styles.debtCard}>
-                    <View style={styles.debtInfo}>
-                      <Ionicons name="arrow-up-circle-outline" size={18} color={colors.error} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.debtText, { color: colors.text }]}>
-                          Owes {s.toUser.name}
-                        </Text>
-                        <Text style={[styles.debtAmount, { color: colors.error }]}>
-                          ₹{s.amount.toFixed(2)}
+        <View style={styles.list}>
+          {allSettlements.map((s) => {
+            const isSettled = s.status === "SETTLED";
+            const iOwe = s.fromUserId === user?.id;
+            const owesMe = s.toUserId === user?.id;
+            
+            // If the user isn't involved in this settlement directly, we can still show it but from a 3rd party perspective
+            const fromName = iOwe ? "You" : s.fromUser.name;
+            const toName = owesMe ? "You" : s.toUser.name;
+            const displayTitle = iOwe ? s.toUser.name : owesMe ? s.fromUser.name : `${fromName} to ${toName}`;
+            const displaySub = iOwe ? "You owe them" : owesMe ? "Owes you" : `${fromName} owes ${toName}`;
+            
+            return (
+              <View 
+                key={s.id} 
+                style={[
+                  styles.debtCard, 
+                  { borderColor: colors.border },
+                  isSettled && { opacity: 0.6 }
+                ]}
+              >
+                <View style={styles.debtLeft}>
+                  <View style={[styles.avatar, { borderColor: "rgba(255,255,255,0.2)" }]}>
+                    {s.toUser.avatarUrl || s.fromUser.avatarUrl ? (
+                      <Image source={{ uri: iOwe ? s.toUser.avatarUrl : s.fromUser.avatarUrl }} style={styles.avatarImg} />
+                    ) : (
+                      <View style={[styles.avatarFallback, { backgroundColor: colors.surfaceVariant }]}>
+                        <Text style={[styles.avatarInitial, { color: colors.textSecondary }]}>
+                          {displayTitle.charAt(0)}
                         </Text>
                       </View>
-                    </View>
-                    <TouchableOpacity
-                      style={[styles.settleBtn, { backgroundColor: colors.primary }]}
-                      onPress={() => openSettleModal(s)}
-                    >
-                      <Text style={styles.settleBtnText}>Settle This</Text>
-                    </TouchableOpacity>
+                    )}
                   </View>
-                ))}
-              </View>
-            )}
+                  <View>
+                    <Text style={[styles.debtTitle, { color: colors.text }]}>{displayTitle}</Text>
+                    <Text style={[styles.debtSub, { color: colors.textSecondary }]}>
+                      {isSettled ? "Settled up" : displaySub}
+                    </Text>
+                  </View>
+                </View>
 
-            {/* What this person gets back */}
-            {personGets.length > 0 && (
-              <View style={[!personOwes.length ? styles.debtContainer : undefined, personOwes.length ? styles.getsSection : undefined, { borderTopColor: colors.border }]}>
-                {personGets.map((s) => (
-                  <View key={s.id} style={styles.debtInfo}>
-                    <Ionicons name="arrow-down-circle-outline" size={18} color={colors.success} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.debtText, { color: colors.text }]}>
-                        Gets from {s.fromUser.name}
-                      </Text>
-                      <Text style={[styles.debtAmount, { color: colors.success }]}>
+                <View style={styles.debtRight}>
+                  {isSettled ? (
+                    <>
+                      <Text style={[styles.debtAmount, { color: colors.textSecondary }]}>
                         ₹{s.amount.toFixed(2)}
                       </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {personOwes.length === 0 && personGets.length === 0 && (
-              <Text style={[styles.allClear, { color: colors.success }]}>✓ All clear</Text>
-            )}
-          </Card>
-        );
-      })}
-
-      {/* Settled history */}
-      {settledSettlements.length > 0 && (
-        <>
-          <Text style={[styles.sectionTitle, { color: colors.text, marginTop: spacing.md }]}>
-            Settlement History
-          </Text>
-          {settledSettlements.map((s) => (
-            <Card key={s.id}>
-              <View style={styles.historyRow}>
-                <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.text }}>
-                    {s.fromUser.name} → {s.toUser.name}
-                  </Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
-                    {s.settledAt ? new Date(s.settledAt).toLocaleDateString() : ""}
-                  </Text>
+                      <Ionicons name="checkmark-circle" size={20} color={colors.textSecondary} style={{ marginTop: 4 }} />
+                    </>
+                  ) : (
+                    <>
+                      <Text 
+                        style={[
+                          styles.debtAmount, 
+                          iOwe ? [styles.neonTextPink, { color: "#ffb1c4" }] : 
+                          owesMe ? [styles.neonTextGreen, { color: colors.success }] : 
+                          { color: colors.text }
+                        ]}
+                      >
+                        {owesMe ? "+" : iOwe ? "-" : ""}₹{s.amount.toFixed(2)}
+                      </Text>
+                      
+                      {iOwe ? (
+                        <TouchableOpacity 
+                          style={[styles.actionBtn, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "#ffb1c44D" }]}
+                          onPress={() => openSettleModal(s)}
+                        >
+                          <Text style={[styles.actionBtnText, { color: "#ffb1c4" }]}>Pay</Text>
+                          <MaterialIcons name="payment" size={16} color="#ffb1c4" />
+                        </TouchableOpacity>
+                      ) : owesMe ? (
+                        <TouchableOpacity 
+                          style={[styles.actionBtn, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border, opacity: 0.5 }]}
+                          disabled
+                        >
+                          <Text style={[styles.actionBtnText, { color: colors.textSecondary }]}>Remind</Text>
+                          <Ionicons name="notifications" size={14} color={colors.textSecondary} />
+                        </TouchableOpacity>
+                      ) : null}
+                    </>
+                  )}
                 </View>
-                <Text style={{ color: colors.success, fontWeight: "700" }}>
-                  ₹{s.amount.toFixed(2)}
-                </Text>
               </View>
-            </Card>
-          ))}
-        </>
-      )}
+            );
+          })}
 
-      {pendingSettlements.length === 0 && settledSettlements.length === 0 && (
-        <Card>
-          <View style={styles.allSettledRow}>
-            <Ionicons name="checkmark-circle" size={28} color={colors.success} />
-            <Text style={[styles.allSettledText, { color: colors.success }]}>All settled up!</Text>
-          </View>
-        </Card>
-      )}
+          {allSettlements.length === 0 && (
+            <View style={{ alignItems: "center", padding: spacing.xl }}>
+              <Ionicons name="checkmark-circle" size={48} color={colors.success} />
+              <Text style={{ color: colors.success, fontSize: 18, marginTop: 16 }}>All settled up!</Text>
+            </View>
+          )}
+        </View>
 
-      {/* Settle Modal */}
+      </ScrollView>
+
+      {/* Settle Modal (Kept functionality but reskinned slightly) */}
       <Modal visible={!!settleModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { backgroundColor: colors.surface }]}>
+          <View style={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Record Payment</Text>
 
             {settleModal && (
               <>
-                <View style={[styles.modalInfo, { backgroundColor: colors.background }]}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-                    {settleModal.fromUser.name} owes {settleModal.toUser.name}
+                <View style={[styles.modalInfo, { backgroundColor: "rgba(255,255,255,0.03)" }]}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: "Hanken Grotesk" }}>
+                    You owe {settleModal.toUser.name}
                   </Text>
-                  <Text style={[styles.modalOwed, { color: colors.primary }]}>
+                  <Text style={[styles.modalOwed, { color: "#ffb1c4" }, styles.neonTextPink]}>
                     ₹{settleModal.amount.toFixed(2)}
                   </Text>
                 </View>
 
-                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Amount Paid</Text>
                 <TextInput
-                  style={[styles.modalInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
+                  style={[styles.modalInput, { color: colors.text, borderBottomColor: colors.border }]}
                   value={settleAmount}
                   onChangeText={setSettleAmount}
                   keyboardType="decimal-pad"
@@ -292,40 +282,19 @@ export function SettlementsScreen({ route }: Props) {
                   selectTextOnFocus
                 />
 
-                {(() => {
-                  const paid = parseFloat(settleAmount) || 0;
-                  const owed = settleModal.amount;
-                  const diff = paid - owed;
-                  if (Math.abs(diff) < 0.01) return null;
-                  return (
-                    <View style={[styles.diffBanner, { backgroundColor: diff < 0 ? colors.error + "15" : colors.success + "15" }]}>
-                      <Ionicons
-                        name={diff < 0 ? "alert-circle-outline" : "information-circle-outline"}
-                        size={16}
-                        color={diff < 0 ? colors.error : colors.success}
-                      />
-                      <Text style={{ color: diff < 0 ? colors.error : colors.success, fontSize: 13, flex: 1 }}>
-                        {diff < 0
-                          ? `₹${Math.abs(diff).toFixed(2)} will remain pending`
-                          : `₹${diff.toFixed(2)} overpaid — a reverse settlement will be created`}
-                      </Text>
-                    </View>
-                  );
-                })()}
-
                 <View style={styles.modalActions}>
                   <TouchableOpacity
-                    style={[styles.modalBtn, { backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1 }]}
+                    style={[styles.modalBtn, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}
                     onPress={() => { setSettleModal(null); setSettleAmount(""); }}
                   >
-                    <Text style={{ color: colors.text, fontWeight: "600" }}>Cancel</Text>
+                    <Text style={{ color: colors.text, fontFamily: "JetBrains Mono" }}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.modalBtn, { backgroundColor: colors.primary }]}
+                    style={[styles.modalBtn, { backgroundColor: colors.primary, borderWidth: 0 }]}
                     onPress={handleSettle}
                   >
-                    <Text style={{ color: "#fff", fontWeight: "600" }}>
-                      {settleWithAmount.isPending ? "Settling..." : "Confirm Payment"}
+                    <Text style={{ color: colors.background, fontFamily: "JetBrains Mono", fontWeight: "700" }}>
+                      {settleWithAmount.isPending ? "Settling..." : "Confirm"}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -334,54 +303,51 @@ export function SettlementsScreen({ route }: Props) {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: spacing.md, paddingBottom: spacing.xl },
-  sectionTitle: { fontSize: 16, fontWeight: "600", marginBottom: spacing.sm },
-  summaryRow: { flexDirection: "row", justifyContent: "space-around", marginTop: spacing.xs },
-  summaryItem: { alignItems: "center" },
-  summaryValue: { fontSize: 20, fontWeight: "700" },
-  summaryLabel: { fontSize: 12, marginTop: 2 },
-  personHeader: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  avatar: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
-  avatarText: { fontSize: 18, fontWeight: "700" },
-  personName: { fontSize: 16, fontWeight: "600" },
-  personSub: { fontSize: 12, marginTop: 2 },
-  netBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  netText: { fontWeight: "700", fontSize: 14 },
-  debtContainer: { borderTopWidth: 1, marginTop: spacing.sm, paddingTop: spacing.sm, gap: 10 },
-  getsSection: { marginTop: 8, gap: 6 },
-  debtCard: { gap: 6 },
-  debtInfo: { flexDirection: "row", alignItems: "center", gap: 8 },
-  debtText: { fontSize: 14, fontWeight: "500" },
-  debtAmount: { fontWeight: "700", fontSize: 15 },
-  settleBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, alignSelf: "flex-start", marginLeft: 26 },
-  settleBtnText: { color: "#fff", fontWeight: "600", fontSize: 13 },
-  allClear: { marginTop: spacing.sm, fontSize: 13, fontWeight: "600" },
-  historyRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  allSettledRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, justifyContent: "center", paddingVertical: spacing.sm },
-  allSettledText: { fontSize: 16, fontWeight: "600" },
-  // Modal
-  modalOverlay: {
-    flex: 1, backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center", alignItems: "center",
-    padding: spacing.md,
-  },
-  modalCard: { width: "100%", borderRadius: 16, padding: spacing.md },
-  modalTitle: { fontSize: 18, fontWeight: "700", marginBottom: spacing.md },
-  modalInfo: { padding: spacing.sm, borderRadius: 10, marginBottom: spacing.md },
-  modalOwed: { fontSize: 24, fontWeight: "700", marginTop: 4 },
-  inputLabel: { fontSize: 13, marginBottom: 4 },
-  modalInput: {
-    fontSize: 20, fontWeight: "700",
-    borderWidth: 1, borderRadius: 10,
-    padding: spacing.sm, marginBottom: spacing.sm,
-  },
-  diffBanner: { flexDirection: "row", gap: 8, alignItems: "center", padding: spacing.sm, borderRadius: 8, marginBottom: spacing.md },
+  appBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", height: 64, paddingHorizontal: spacing.md, borderBottomWidth: 1, zIndex: 50 },
+  appBarBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center", borderRadius: 20 },
+  appBarTitle: { fontSize: 22, fontWeight: "700" },
+
+  content: { padding: spacing.md, paddingBottom: 100 },
+
+  summaryPanel: { alignItems: "center", justifyContent: "center", gap: 8, padding: spacing.md, borderRadius: 16, borderWidth: 1, backgroundColor: "rgba(255,255,255,0.05)", overflow: "hidden", position: "relative" },
+  gradientOverlay: { position: "absolute", inset: 0, backgroundColor: "rgba(0,245,255,0.05)" },
+  summaryLabel: { fontSize: 20, fontFamily: "Hanken Grotesk", fontWeight: "500", zIndex: 10 },
+  summaryValue: { fontSize: 48, fontFamily: "Hanken Grotesk", fontWeight: "700", zIndex: 10, letterSpacing: -1 },
+  settleAllBtn: { marginTop: spacing.sm, paddingVertical: 8, paddingHorizontal: 40, borderRadius: 24, zIndex: 10, shadowOffset: { width:0, height:0 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 5 },
+  settleAllText: { fontSize: 20, fontFamily: "Hanken Grotesk", fontWeight: "500" },
+
+  sectionTitle: { fontSize: 20, fontFamily: "Hanken Grotesk", fontWeight: "500", marginTop: spacing.md, marginBottom: spacing.sm },
+
+  list: { gap: spacing.sm },
+  debtCard: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: spacing.sm, borderRadius: 16, borderWidth: 1, backgroundColor: "rgba(255,255,255,0.05)" },
+  debtLeft: { flexDirection: "row", alignItems: "center", gap: spacing.sm, flex: 1 },
+  avatar: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, overflow: "hidden" },
+  avatarImg: { width: "100%", height: "100%" },
+  avatarFallback: { width: "100%", height: "100%", alignItems: "center", justifyContent: "center" },
+  avatarInitial: { fontSize: 20, fontWeight: "700" },
+  debtTitle: { fontSize: 20, fontFamily: "Hanken Grotesk", fontWeight: "500" },
+  debtSub: { fontSize: 16, fontFamily: "Hanken Grotesk" },
+  
+  debtRight: { alignItems: "flex-end", gap: 8 },
+  debtAmount: { fontSize: 18, fontFamily: "JetBrains Mono", letterSpacing: 1 },
+  actionBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
+  actionBtnText: { fontSize: 12, fontFamily: "JetBrains Mono" },
+
+  neonTextPink: { textShadowColor: "rgba(255, 177, 196, 0.5)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 10 },
+  neonTextGreen: { textShadowColor: "rgba(47, 248, 1, 0.5)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 10 },
+
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "center", alignItems: "center", padding: spacing.md },
+  modalCard: { width: "100%", borderRadius: 16, padding: spacing.md, borderWidth: 1 },
+  modalTitle: { fontSize: 20, fontWeight: "700", fontFamily: "Hanken Grotesk", marginBottom: spacing.md },
+  modalInfo: { padding: spacing.sm, borderRadius: 12, marginBottom: spacing.md, alignItems: "center" },
+  modalOwed: { fontSize: 28, fontWeight: "700", fontFamily: "JetBrains Mono", marginTop: 4 },
+  modalInput: { fontSize: 24, fontWeight: "700", fontFamily: "JetBrains Mono", borderBottomWidth: 2, padding: spacing.sm, marginBottom: spacing.lg, textAlign: "center" },
   modalActions: { flexDirection: "row", gap: spacing.sm },
-  modalBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: "center" },
+  modalBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: "center", borderWidth: 1 },
 });

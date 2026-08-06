@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   Alert,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,22 +11,22 @@ import {
 } from "react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
-import { Button } from "@/shared/components/Button";
-import { Card, ScreenHeader } from "@/shared/components/Card";
 import { ErrorState } from "@/shared/components/ErrorState";
 import { LoadingState } from "@/shared/components/LoadingState";
-import { useTheme } from "@/shared/hooks/useTheme";
+import { useThemeStore } from "@/shared/hooks/useTheme";
 import { spacing } from "@/shared/theme";
 import { recurringService } from "@/shared/services/modules";
 import { getErrorMessage } from "@/shared/services/api";
 
 export function RecurringScreen() {
-  const { colors } = useTheme();
+  const { colors } = useThemeStore();
   const queryClient = useQueryClient();
-  const [amount, setAmount] = useState("100");
-  const [category, setCategory] = useState("Food");
+  
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
   const [notes, setNotes] = useState("");
-  const [dayOfMonth, setDayOfMonth] = useState("1");
+  const [dayOfMonth, setDayOfMonth] = useState("");
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["recurring"],
@@ -51,11 +52,11 @@ export function RecurringScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["recurring"] });
-      setAmount("100");
-      setCategory("Food");
+      setAmount("");
+      setCategory("");
       setNotes("");
-      setDayOfMonth("1");
-      Alert.alert("Saved", "Recurring expense added.");
+      setDayOfMonth("");
+      setModalVisible(false);
     },
     onError: (err) => Alert.alert("Error", getErrorMessage(err)),
   });
@@ -74,118 +75,265 @@ export function RecurringScreen() {
 
   const summary = useMemo(() => {
     const items = data ?? [];
+    let totalMonthly = 0;
+    items.forEach((item: any) => {
+      if (item.isActive) {
+        totalMonthly += Number(item.amount);
+      }
+    });
     return {
       active: items.filter((item: any) => item.isActive).length,
       total: items.length,
+      totalMonthly,
     };
   }, [data]);
+
+  const getStatusText = (day: number, isActive: boolean) => {
+    if (!isActive) return { text: "INACTIVE", color: colors.textSecondary };
+    const today = new Date().getDate();
+    if (day === today) return { text: "DUE TODAY", color: colors.warning };
+    if (day < today) return { text: "PAID", color: colors.success };
+    const daysLeft = day - today;
+    return { text: `IN ${daysLeft} DAY${daysLeft > 1 ? 'S' : ''}`, color: colors.textSecondary };
+  };
+
+  const getCategoryIcon = (category: string) => {
+    const c = category.toLowerCase();
+    if (c.includes("rent") || c.includes("home") || c.includes("house")) return { icon: "home", color: colors.primary };
+    if (c.includes("gym") || c.includes("fit")) return { icon: "barbell", color: colors.primary };
+    if (c.includes("movie") || c.includes("netf") || c.includes("sub") || c.includes("entert")) return { icon: "film", color: colors.primary };
+    if (c.includes("soft") || c.includes("cloud") || c.includes("app")) return { icon: "laptop", color: colors.primary };
+    return { icon: "receipt", color: colors.primary };
+  };
 
   if (isLoading) return <LoadingState />;
   if (isError) return <ErrorState message="Failed to load recurring expenses" onRetry={refetch} />;
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}
-    >
-      <ScreenHeader title="Recurring" subtitle="Auto-create expenses on a schedule" />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* TopAppBar */}
+      <View style={[styles.topAppBar, { backgroundColor: colors.surface + "E6", borderBottomColor: colors.border }]}>
+        <TouchableOpacity style={styles.appBarBtn}>
+          <Ionicons name="wallet-outline" size={24} color={colors.textSecondary} />
+        </TouchableOpacity>
+        <Text style={[styles.appBarTitle, { color: colors.primary }]}>Smart Expense</Text>
+        <TouchableOpacity style={styles.appBarBtn}>
+          <Ionicons name="notifications-outline" size={24} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
 
-      <Card>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Add recurring expense</Text>
-        <View style={styles.row}>
-          <TextInput
-            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }]}
-            value={amount}
-            onChangeText={setAmount}
-            placeholder="Amount"
-            keyboardType="decimal-pad"
-          />
-          <TextInput
-            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }]}
-            value={category}
-            onChangeText={setCategory}
-            placeholder="Category"
-          />
+      <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.text }]}>Recurring Expenses</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Manage your automated charges.</Text>
         </View>
-        <TextInput
-          style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface, marginBottom: spacing.sm }]}
-          value={notes}
-          onChangeText={setNotes}
-          placeholder="Notes"
-        />
-        <TextInput
-          style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }]}
-          value={dayOfMonth}
-          onChangeText={setDayOfMonth}
-          placeholder="Day of month"
-          keyboardType="number-pad"
-        />
-        <View style={styles.actions}>
-          <Button
-            title="Save"
-            onPress={() => createMutation.mutate()}
-            loading={createMutation.isPending}
-          />
-        </View>
-      </Card>
 
-      <Card>
-        <View style={styles.summaryRow}>
-          <Text style={[styles.summaryText, { color: colors.text }]}>Active: {summary.active}</Text>
-          <Text style={[styles.summaryText, { color: colors.textSecondary }]}>Total: {summary.total}</Text>
+        {/* Summary Metric */}
+        <View style={[styles.summaryCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+          <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>TOTAL MONTHLY</Text>
+          <Text style={[styles.summaryAmount, { color: colors.primary }]}>₹{summary.totalMonthly.toFixed(2)}</Text>
+          <View style={styles.summaryTrend}>
+            <Ionicons name="trending-up" size={14} color={colors.error} />
+            <Text style={[styles.trendText, { color: colors.error }]}>+₹0.00 vs last month</Text>
+          </View>
         </View>
-      </Card>
 
-      {(data ?? []).length === 0 ? (
-        <Card>
-          <Text style={[styles.empty, { color: colors.textSecondary }]}>No recurring expenses yet.</Text>
-        </Card>
-      ) : (
-        (data ?? []).map((item: any) => (
-          <Card key={item.id}>
-            <View style={styles.itemRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.itemTitle, { color: colors.text }]}>₹{Number(item.amount).toFixed(2)}</Text>
-                <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>Category: {item.category}</Text>
-                <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>Day: {item.dayOfMonth}</Text>
-                {item.notes ? <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>Notes: {item.notes}</Text> : null}
-              </View>
-              <TouchableOpacity
-                onPress={() => toggleMutation.mutate(item.id)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Ionicons name={item.isActive ? "toggle" : "toggle-outline"} size={24} color={item.isActive ? colors.primary : colors.textSecondary} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  Alert.alert("Delete", "Remove this recurring expense?", [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Delete", style: "destructive", onPress: () => deleteMutation.mutate(item.id) },
-                  ]);
-                }}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Ionicons name="trash-outline" size={20} color={colors.error} />
+        {/* List Section */}
+        <View style={styles.listSection}>
+          {(data ?? []).length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="calendar-outline" size={48} color={colors.textSecondary} />
+              <Text style={{ color: colors.textSecondary, marginTop: 12 }}>No recurring expenses yet.</Text>
+            </View>
+          ) : (
+            (data ?? []).map((item: any) => {
+              const { icon, color } = getCategoryIcon(item.category);
+              const status = getStatusText(item.dayOfMonth, item.isActive);
+              return (
+                <TouchableOpacity 
+                  key={item.id} 
+                  style={[styles.itemCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)", opacity: item.isActive ? 1 : 0.6 }]}
+                  onLongPress={() => {
+                    Alert.alert("Manage", "Choose an action", [
+                      { text: item.isActive ? "Pause" : "Resume", onPress: () => toggleMutation.mutate(item.id) },
+                      { text: "Delete", style: "destructive", onPress: () => deleteMutation.mutate(item.id) },
+                      { text: "Cancel", style: "cancel" },
+                    ]);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.itemLeft}>
+                    <View style={[styles.itemIconBox, { backgroundColor: colors.surfaceVariant, borderColor: "rgba(255,255,255,0.05)" }]}>
+                      <Ionicons name={icon as any} size={24} color={color} />
+                    </View>
+                    <View>
+                      <Text style={[styles.itemTitleText, { color: colors.text }]} numberOfLines={1}>
+                        {item.category}
+                      </Text>
+                      <Text style={[styles.itemSubtitleText, { color: colors.textSecondary }]}>
+                        Monthly • {item.dayOfMonth}{item.dayOfMonth === 1 ? 'st' : item.dayOfMonth === 2 ? 'nd' : item.dayOfMonth === 3 ? 'rd' : 'th'} of month
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.itemRight}>
+                    <Text style={[styles.itemAmount, { color: colors.text }]}>₹{Number(item.amount).toFixed(2)}</Text>
+                    <Text style={[styles.itemStatus, { color: status.color }]}>{status.text}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </View>
+      </ScrollView>
+
+      {/* FAB */}
+      <TouchableOpacity 
+        style={[styles.fab, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+        onPress={() => setModalVisible(true)}
+      >
+        <Ionicons name="add" size={28} color="#000" />
+      </TouchableOpacity>
+
+      {/* Add Modal */}
+      <Modal visible={isModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Add Recurring Expense</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close" size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
-          </Card>
-        ))
-      )}
-    </ScrollView>
+
+            <TextInput
+              style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surfaceVariant }]}
+              value={amount}
+              onChangeText={setAmount}
+              placeholder="Amount (e.g. 1500)"
+              placeholderTextColor={colors.textSecondary}
+              keyboardType="decimal-pad"
+            />
+            
+            <TextInput
+              style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surfaceVariant }]}
+              value={category}
+              onChangeText={setCategory}
+              placeholder="Category (e.g. Rent, Gym, Netflix)"
+              placeholderTextColor={colors.textSecondary}
+            />
+
+            <TextInput
+              style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surfaceVariant }]}
+              value={dayOfMonth}
+              onChangeText={setDayOfMonth}
+              placeholder="Day of month (1-31)"
+              placeholderTextColor={colors.textSecondary}
+              keyboardType="number-pad"
+            />
+
+            <TextInput
+              style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surfaceVariant, marginBottom: spacing.lg }]}
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Optional notes"
+              placeholderTextColor={colors.textSecondary}
+            />
+
+            <TouchableOpacity
+              style={[styles.submitBtn, { backgroundColor: colors.primary, opacity: (amount && category && dayOfMonth) ? 1 : 0.5 }]}
+              onPress={() => createMutation.mutate()}
+              disabled={!amount || !category || !dayOfMonth || createMutation.isPending}
+            >
+              <Text style={[styles.submitBtnText, { color: "#000" }]}>Create</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: spacing.md, paddingBottom: spacing.xl },
-  sectionTitle: { fontSize: 16, fontWeight: "600", marginBottom: spacing.sm },
-  row: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.sm },
-  input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, marginBottom: spacing.sm },
-  actions: { marginTop: spacing.sm },
-  summaryRow: { flexDirection: "row", justifyContent: "space-between" },
-  summaryText: { fontSize: 14, fontWeight: "600" },
-  empty: { textAlign: "center" },
-  itemRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  itemTitle: { fontSize: 16, fontWeight: "700" },
-  itemMeta: { fontSize: 12, marginTop: 2 },
+  topAppBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    height: 64,
+    paddingHorizontal: spacing.md,
+    borderBottomWidth: 1,
+    zIndex: 50,
+  },
+  appBarBtn: { padding: 8, borderRadius: 20 },
+  appBarTitle: { fontSize: 22, fontWeight: "700" },
+
+  content: { flex: 1 },
+  scrollContent: { paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: 120 },
+  
+  header: { marginBottom: spacing.md },
+  title: { fontSize: 24, fontWeight: "600", fontFamily: "Hanken Grotesk", marginBottom: 4 },
+  subtitle: { fontSize: 14, fontFamily: "Hanken Grotesk" },
+
+  summaryCard: {
+    padding: spacing.md,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.lg,
+  },
+  summaryLabel: { fontSize: 12, fontFamily: "JetBrains Mono", letterSpacing: 1, marginBottom: 8 },
+  summaryAmount: { fontSize: 42, fontWeight: "700", fontFamily: "Hanken Grotesk", textShadowColor: "rgba(0,245,255,0.3)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 8, marginBottom: 8 },
+  summaryTrend: { flexDirection: "row", alignItems: "center", gap: 4 },
+  trendText: { fontSize: 12, fontFamily: "JetBrains Mono" },
+
+  listSection: { gap: spacing.sm },
+  emptyState: { alignItems: "center", justifyContent: "center", paddingVertical: 40 },
+  
+  itemCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  itemLeft: { flexDirection: "row", alignItems: "center", gap: 14, flex: 1 },
+  itemIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  itemTitleText: { fontSize: 16, fontWeight: "600", fontFamily: "Hanken Grotesk", marginBottom: 4 },
+  itemSubtitleText: { fontSize: 12, fontFamily: "JetBrains Mono" },
+  itemRight: { alignItems: "flex-end" },
+  itemAmount: { fontSize: 18, fontFamily: "JetBrains Mono", fontWeight: "700", marginBottom: 4 },
+  itemStatus: { fontSize: 10, fontFamily: "JetBrains Mono", textTransform: "uppercase", fontWeight: "600" },
+
+  fab: {
+    position: "absolute",
+    bottom: 24,
+    right: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+
+  // Modal
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" },
+  modalContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: spacing.md, paddingBottom: spacing.xl },
+  modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.lg },
+  modalTitle: { fontSize: 20, fontWeight: "700" },
+  input: { height: 52, borderRadius: 12, borderWidth: 1, paddingHorizontal: 16, fontSize: 16, marginBottom: spacing.sm },
+  submitBtn: { height: 52, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  submitBtnText: { fontSize: 16, fontWeight: "700" },
 });

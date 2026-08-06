@@ -2,6 +2,7 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from "@react-navigation/
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuthStore } from "@/modules/authentication/store/authStore";
 import { SplashScreen } from "@/modules/authentication/screens/SplashScreen";
+import { WelcomeScreen } from "@/modules/authentication/screens/WelcomeScreen";
 import { LoginScreen } from "@/modules/authentication/screens/LoginScreen";
 import { RegisterScreen } from "@/modules/authentication/screens/RegisterScreen";
 import { ForgotPasswordScreen } from "@/modules/authentication/screens/ForgotPasswordScreen";
@@ -17,12 +18,15 @@ import { BudgetsScreen } from "@/modules/budgets/screens/BudgetsScreen";
 import { AddBudgetScreen } from "@/modules/budgets/screens/AddBudgetScreen";
 import { NotificationsScreen } from "@/modules/notifications/screens/NotificationsScreen";
 import { ProfileScreen } from "@/modules/profile/screens/ProfileScreen";
+import { SettingsScreen } from "@/modules/profile/screens/SettingsScreen";
+import { FriendsScreen } from "@/modules/friends/screens/FriendsScreen";
 import { MainTabs } from "./MainTabs";
 import { useThemeStore } from "@/shared/hooks/useTheme";
 import { AuthStackParamList, RootStackParamList } from "./types";
 import { GroupExpensesScreen } from "@/modules/groups/screens/GroupExpensesScreen";
 import { CategoriesScreen } from "@/modules/categories/screens/CategoriesScreen";
 import { RecurringScreen } from "@/modules/recurring/screens/RecurringScreen";
+import { MemberActivityScreen } from "@/modules/groups/screens/MemberActivityScreen";
 
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -31,6 +35,7 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 function AuthNavigator() {
   return (
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+      <AuthStack.Screen name="Welcome" component={WelcomeScreen} />
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
       <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
@@ -70,7 +75,10 @@ function AppNavigator() {
       <RootStack.Screen name="AddBudget" component={AddBudgetScreen} options={{ title: "Set Budget" }} />
       <RootStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: "Notifications" }} />
       <RootStack.Screen name="Profile" component={ProfileScreen} options={{ title: "Profile" }} />
+      <RootStack.Screen name="Friends" component={FriendsScreen} options={{ title: "Friends" }} />
+      <RootStack.Screen name="Settings" component={SettingsScreen} options={{ title: "Settings" }} />
       <RootStack.Screen name="GroupExpenses" component={GroupExpensesScreen} options={{ headerShown: false }} />
+      <RootStack.Screen name="MemberActivity" component={MemberActivityScreen} options={{ headerShown: false }} />
       <RootStack.Screen name="Categories" component={CategoriesScreen} options={{ title: "Categories" }} />
       <RootStack.Screen name="Recurring" component={RecurringScreen} options={{ title: "Recurring" }} />
     </RootStack.Navigator>

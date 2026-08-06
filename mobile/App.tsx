@@ -37,7 +37,17 @@ const styles = StyleSheet.create({
   errorStack: { color: "#ff9999", fontSize: 11, fontFamily: "monospace" },
 });
 
-// ─── App ───────────────────────────────────────────────────────────────────
+import {
+  useFonts,
+  JetBrainsMono_400Regular,
+  JetBrainsMono_700Bold,
+} from "@expo-google-fonts/jetbrains-mono";
+import {
+  HankenGrotesk_400Regular,
+  HankenGrotesk_600SemiBold,
+  HankenGrotesk_700Bold,
+} from "@expo-google-fonts/hanken-grotesk";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { retry: 1, staleTime: 30_000 },
@@ -46,6 +56,15 @@ const queryClient = new QueryClient({
 
 export default function App() {
   const isDark = useThemeStore((s) => s.isDark);
+  
+  const [fontsLoaded] = useFonts({
+    "JetBrains Mono": JetBrainsMono_700Bold,
+    "Hanken Grotesk": HankenGrotesk_400Regular,
+  });
+
+  if (!fontsLoaded) {
+    return null; // or a custom splash screen
+  }
 
   return (
     <ErrorBoundary>
