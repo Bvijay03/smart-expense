@@ -27,7 +27,7 @@ import { GroupExpensesScreen } from "@/modules/groups/screens/GroupExpensesScree
 import { CategoriesScreen } from "@/modules/categories/screens/CategoriesScreen";
 import { RecurringScreen } from "@/modules/recurring/screens/RecurringScreen";
 import { MemberActivityScreen } from "@/modules/groups/screens/MemberActivityScreen";
-
+import { usePushNotifications } from "@/shared/hooks/usePushNotifications";
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -89,7 +89,10 @@ function AppNavigator() {
 export function RootNavigator() {
   const isLoading = useAuthStore((s) => s.isLoading);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
   const { colors, isDark } = useThemeStore();
+
+  usePushNotifications(user?.id);
 
   const navTheme = {
     ...(isDark ? DarkTheme : DefaultTheme),

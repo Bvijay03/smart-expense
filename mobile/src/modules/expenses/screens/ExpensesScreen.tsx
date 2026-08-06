@@ -138,7 +138,7 @@ export function ExpensesScreen() {
       <View style={[styles.bgBlobTop, { backgroundColor: colors.primary + "1A" }]} />
       
       {/* TopAppBar */}
-      <View style={[styles.topAppBar, { backgroundColor: "rgba(17,19,24,0.75)", borderBottomColor: "rgba(255,255,255,0.08)" }]}>
+      <View style={[styles.topAppBar, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.appBarBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.textSecondary} />
         </TouchableOpacity>
@@ -150,7 +150,7 @@ export function ExpensesScreen() {
 
       <View style={styles.content}>
         {/* Summary Card */}
-        <View style={[styles.summaryCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+        <View style={[styles.summaryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={[styles.summaryGlow, { backgroundColor: colors.primary + "1A" }]} />
           
           <View style={styles.summaryTop}>
@@ -162,15 +162,15 @@ export function ExpensesScreen() {
           </View>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.breakdownScroll}>
-            <View style={[styles.breakdownBox, { backgroundColor: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }]}>
+            <View style={[styles.breakdownBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]}>PERSONAL</Text>
               <Text style={[styles.breakdownVal, { color: colors.text }]}>₹{totalFiltered.toFixed(2)}</Text>
             </View>
-            <View style={[styles.breakdownBox, { backgroundColor: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }]}>
+            <View style={[styles.breakdownBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]}>GROUP</Text>
               <Text style={[styles.breakdownVal, { color: colors.text }]}>₹0.00</Text>
             </View>
-            <View style={[styles.breakdownBox, { backgroundColor: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }]}>
+            <View style={[styles.breakdownBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]}>FRIENDS</Text>
               <Text style={[styles.breakdownVal, { color: colors.text }]}>₹0.00</Text>
             </View>
@@ -179,7 +179,7 @@ export function ExpensesScreen() {
 
         {/* Search & Filter Controls */}
         <View style={styles.controlsRow}>
-          <View style={[styles.searchBox, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+          <View style={[styles.searchBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Ionicons name="search" size={20} color={colors.textSecondary} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
@@ -195,7 +195,7 @@ export function ExpensesScreen() {
             ) : null}
           </View>
 
-          <TouchableOpacity style={[styles.filterBtn, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+          <TouchableOpacity style={[styles.filterBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Ionicons name="filter-outline" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
@@ -224,7 +224,7 @@ export function ExpensesScreen() {
               
               return (
                 <TouchableOpacity 
-                  style={[styles.txCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.08)" }]}
+                  style={[styles.txCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
                   onLongPress={() => showActions(item)}
                   onPress={() => navigation.navigate("EditExpense", {
                     expenseId: item.id,
@@ -244,7 +244,7 @@ export function ExpensesScreen() {
                         {item.notes || `${item.category} Expense`}
                       </Text>
                       <View style={styles.txMetaRow}>
-                        <View style={[styles.txTag, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)" }]}>
+                        <View style={[styles.txTag, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                           <Text style={[styles.txTagText, { color: colors.textSecondary }]}>{item.category}</Text>
                         </View>
                         <Text style={[styles.txTime, { color: colors.textSecondary }]}>• {dateStr}</Text>

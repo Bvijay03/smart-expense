@@ -84,7 +84,7 @@ export function GroupsScreen() {
         </View>
         <View style={styles.headerButtons}>
           <TouchableOpacity
-            style={[styles.joinBtn, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}
+            style={[styles.joinBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => setJoinModalVisible(true)}
           >
             <Ionicons name="enter-outline" size={18} color={colors.text} />
@@ -150,7 +150,7 @@ export function GroupsScreen() {
                   })
                 }
               >
-                <View style={[styles.glassCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+                <View style={[styles.glassCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                   {/* Top row: name + member count */}
                   <View style={styles.cardTop}>
                     <View style={[styles.groupIcon, { backgroundColor: colors.primary + "1A", borderColor: colors.primary + "33" }]}>
@@ -168,7 +168,7 @@ export function GroupsScreen() {
                   </View>
 
                   {/* Divider */}
-                  <View style={[styles.divider, { backgroundColor: "rgba(255,255,255,0.08)" }]} />
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                   {/* Stats row */}
                   <View style={styles.statsRow}>
@@ -186,7 +186,7 @@ export function GroupsScreen() {
                     </View>
 
                     {/* Vertical separator */}
-                    <View style={[styles.verticalDivider, { backgroundColor: "rgba(255,255,255,0.08)" }]} />
+                    <View style={[styles.verticalDivider, { backgroundColor: colors.border }]} />
 
                     {/* Contribution */}
                     <View style={styles.statItem}>
@@ -221,7 +221,7 @@ export function GroupsScreen() {
           onPress={() => setJoinModalVisible(false)}
         >
           <TouchableOpacity activeOpacity={1} onPress={() => {}} style={{ width: "100%", alignItems: "center" }}>
-            <View style={[styles.modalContent, { backgroundColor: "#1e2024", borderColor: "rgba(255,255,255,0.15)" }]}>
+            <View style={[styles.modalContent, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <View style={styles.modalHeader}>
                 <View style={[styles.modalIcon, { backgroundColor: colors.primary + "1A", borderColor: colors.primary + "4D" }]}>
                   <Ionicons name="key-outline" size={28} color={colors.primary} />
@@ -237,8 +237,8 @@ export function GroupsScreen() {
                   styles.codeInput,
                   {
                     color: colors.primary,
-                    backgroundColor: "rgba(255,255,255,0.03)",
-                    borderColor: "rgba(255,255,255,0.15)",
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
                   },
                 ]}
                 value={inviteCode}

@@ -127,7 +127,7 @@ export function DashboardScreen() {
             <Text style={[styles.overviewLabel, { color: colors.textSecondary, marginBottom: 4 }]}>REMAINING BUDGET</Text>
             <Text style={[styles.remainingAmount, { color: colors.text }]}>${remainingBudget.toFixed(2)}</Text>
           </View>
-          <View style={styles.trendBadge}>
+          <View style={[styles.trendBadge, { backgroundColor: colors.border }]}>
             <Ionicons name={isTrendUp ? "trending-up" : "trending-down"} size={16} color={colors.secondary} />
             <Text style={[styles.trendText, { color: colors.secondary }]}>
               {isTrendUp ? "+" : ""}{trend}%
@@ -154,7 +154,7 @@ export function DashboardScreen() {
                       <Text style={[styles.budgetName, { color: colors.textSecondary }]}>{b.category}</Text>
                       <Text style={[styles.budgetPercent, { color: colors.text }]}>{Math.round(b.percentUsed ?? 0)}%</Text>
                     </View>
-                    <View style={[styles.budgetTrack, { backgroundColor: "rgba(255,255,255,0.1)" }]}>
+                    <View style={[styles.budgetTrack, { backgroundColor: colors.border }]}>
                       <View style={[styles.budgetFill, { width: `${Math.min(b.percentUsed ?? 0, 100)}%`, backgroundColor: barColor, shadowColor: barColor }]} />
                     </View>
                   </View>
@@ -179,7 +179,7 @@ export function DashboardScreen() {
             <TouchableOpacity key={f.id} onPress={() => navigation.navigate("Friends")}>
               <GlassCard intensity={25} style={styles.settlementCard}>
                 <View style={styles.settlementTop}>
-                  <View style={[styles.friendAvatar, { backgroundColor: colors.surface }]}>
+                  <View style={[styles.friendAvatar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                     <Ionicons name="person" size={20} color={colors.textSecondary} />
                   </View>
                   <View>
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   overviewAmount: { fontSize: 48, fontWeight: "700", fontFamily: "Hanken Grotesk", letterSpacing: -1, marginTop: 4 },
   overviewBottom: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", borderTopWidth: 1, paddingTop: spacing.sm },
   remainingAmount: { fontSize: 20, fontWeight: "500", fontFamily: "Hanken Grotesk" },
-  trendBadge: { flexDirection: "row", alignItems: "center", backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 4 },
+  trendBadge: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 4 },
   trendText: { fontSize: 12, fontFamily: "JetBrains Mono", fontWeight: "500" },
 
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   settlementsScroll: { paddingBottom: spacing.sm, gap: spacing.sm },
   settlementCard: { width: 200, padding: spacing.sm, borderRadius: borderRadius.lg, position: "relative" },
   settlementTop: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.md },
-  friendAvatar: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  friendAvatar: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1 },
   friendName: { fontSize: 16, fontWeight: "500", fontFamily: "Hanken Grotesk" },
   friendOweText: { fontSize: 12, fontFamily: "JetBrains Mono" },
   settlementAmount: { fontSize: 24, fontWeight: "500", fontFamily: "Hanken Grotesk" },

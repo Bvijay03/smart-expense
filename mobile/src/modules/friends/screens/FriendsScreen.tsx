@@ -80,7 +80,7 @@ export function FriendsScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Search Bar */}
-        <View style={[styles.searchContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+        <View style={[styles.searchContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
@@ -107,12 +107,12 @@ export function FriendsScreen() {
             </View>
 
             {requests.map((req: any) => (
-              <View key={req.id} style={[styles.requestItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
+              <View key={req.id} style={[styles.requestItem, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <View style={styles.requestInfo}>
                   {req.user.avatarUrl ? (
-                    <Image source={{ uri: req.user.avatarUrl }} style={[styles.avatar, { borderColor: 'rgba(255,255,255,0.1)' }]} />
+                    <Image source={{ uri: req.user.avatarUrl }} style={[styles.avatar, { borderColor: colors.border }]} />
                   ) : (
-                    <View style={[styles.avatarPlaceholder, { borderColor: 'rgba(255,255,255,0.1)' }]}>
+                    <View style={[styles.avatarPlaceholder, { borderColor: colors.border }]}>
                       <Ionicons name="person" size={20} color={colors.textSecondary} />
                     </View>
                   )}
@@ -164,12 +164,12 @@ export function FriendsScreen() {
                         source={{ uri: f.friend.avatarUrl }}
                         style={[
                           styles.avatarLarge,
-                          { borderColor: 'rgba(255,255,255,0.2)' },
+                          { borderColor: colors.border },
                           settled && { opacity: 0.7 }
                         ]}
                       />
                     ) : (
-                      <View style={[styles.avatarLargePlaceholder, { borderColor: 'rgba(255,255,255,0.2)' }, settled && { opacity: 0.7 }]}>
+                      <View style={[styles.avatarLargePlaceholder, { borderColor: colors.border }, settled && { opacity: 0.7 }]}>
                         <Ionicons name="person" size={24} color={colors.textSecondary} />
                       </View>
                     )}
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     height: 64,
     paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontFamily: 'Hanken Grotesk',
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.surface,
   },
   requestText: {
     marginLeft: spacing.sm,
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.surface,
   },
   friendDetails: {
     marginLeft: spacing.md,

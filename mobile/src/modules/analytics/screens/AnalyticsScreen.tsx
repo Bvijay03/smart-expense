@@ -100,7 +100,7 @@ export function AnalyticsScreen() {
         <View style={styles.bentoGrid}>
           
           {/* Spending Trend Card */}
-          <View style={[styles.glassCard, styles.trendCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+          <View style={[styles.glassCard, styles.trendCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.cardHeader}>
               <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Spending Trend</Text>
               <Ionicons name="trending-up" size={20} color={colors.textSecondary} />
@@ -139,7 +139,7 @@ export function AnalyticsScreen() {
           </View>
 
           {/* Category Breakdown Card */}
-          <View style={[styles.glassCard, styles.pieCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+          <View style={[styles.glassCard, styles.pieCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.cardHeader}>
               <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Category Breakdown</Text>
               <Ionicons name="pie-chart-outline" size={20} color={colors.textSecondary} />
@@ -187,10 +187,10 @@ export function AnalyticsScreen() {
         </View>
 
         {/* Budget Management */}
-        <View style={[styles.glassCard, { marginTop: spacing.md, backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+        <View style={[styles.glassCard, { marginTop: spacing.md, backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.budgetHeader}>
             <Text style={[styles.budgetTitle, { color: colors.text }]}>Budget Management</Text>
-            <TouchableOpacity style={[styles.budgetAddBtn, { backgroundColor: "rgba(255,255,255,0.05)" }]}>
+            <TouchableOpacity style={[styles.budgetAddBtn, { backgroundColor: colors.surfaceVariant }]}>
               <Ionicons name="add" size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>
@@ -199,7 +199,7 @@ export function AnalyticsScreen() {
             {budgets.map(b => {
               const perc = Math.min(100, Math.round((b.spent / b.limit) * 100));
               return (
-                <View key={b.name} style={[styles.budgetItem, { backgroundColor: "rgba(255,255,255,0.02)" }]}>
+                <View key={b.name} style={[styles.budgetItem, { backgroundColor: colors.surfaceVariant }]}>
                   <View style={styles.budgetItemTop}>
                     <View style={styles.budgetItemLeft}>
                       <View style={[styles.budgetIconBox, { backgroundColor: b.color + "33" }]}>
@@ -218,7 +218,7 @@ export function AnalyticsScreen() {
                   </View>
                   
                   {/* Progress Bar */}
-                  <View style={[styles.progressBarBg, { backgroundColor: "rgba(255,255,255,0.1)" }]}>
+                  <View style={[styles.progressBarBg, { backgroundColor: colors.border }]}>
                     <View style={[
                       styles.progressBarFill, 
                       { width: `${perc}%`, backgroundColor: perc >= 90 ? colors.error : b.color },

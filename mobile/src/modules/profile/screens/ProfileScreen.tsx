@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image, ActivityIndicator } from "react-native";
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image, ActivityIndicator, Linking } from "react-native";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -164,7 +164,7 @@ export function ProfileScreen() {
 
         {/* Stats Grid (Bento style) */}
         <View style={styles.statsGrid}>
-          <View style={[styles.statCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={[styles.statGlow, { backgroundColor: colors.error + "1A" }]} />
             <View style={styles.statHeader}>
               <Ionicons name="trending-down" size={20} color={colors.textSecondary} />
@@ -176,7 +176,7 @@ export function ProfileScreen() {
             </View>
           </View>
 
-          <View style={[styles.statCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={[styles.statGlow, { backgroundColor: colors.textSecondary + "1A" }]} />
             <View style={styles.statHeader}>
               <Ionicons name="sync" size={20} color={colors.textSecondary} />
@@ -188,7 +188,7 @@ export function ProfileScreen() {
             </View>
           </View>
 
-          <View style={[styles.statCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={[styles.statGlow, { backgroundColor: colors.success + "1A" }]} />
             <View style={styles.statHeader}>
               <Ionicons name="wallet-outline" size={20} color={colors.textSecondary} />
@@ -203,7 +203,7 @@ export function ProfileScreen() {
 
         <View style={styles.twoColGrid}>
           {/* Personal Info Details */}
-          <View style={[styles.glassCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+          <View style={[styles.glassCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Text style={[styles.sectionHeading, { color: colors.primary }]}>Personal Details</Text>
             
             {editingProfile ? (
@@ -251,7 +251,7 @@ export function ProfileScreen() {
           </View>
 
           {/* Connected Accounts */}
-          <View style={[styles.glassCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+          <View style={[styles.glassCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.cardHeaderRow}>
               <Text style={[styles.sectionHeading, { color: colors.primary, borderBottomWidth: 0, marginBottom: 0 }]}>Connected Accounts</Text>
               <TouchableOpacity>
@@ -259,7 +259,7 @@ export function ProfileScreen() {
               </TouchableOpacity>
             </View>
             
-            <View style={[styles.accountRow, { backgroundColor: colors.surface + "80", borderColor: "rgba(255,255,255,0.05)" }]}>
+            <View style={[styles.accountRow, { backgroundColor: colors.surface + "80", borderColor: colors.border }]}>
               <View style={styles.accountLeft}>
                 <View style={[styles.accountIcon, { backgroundColor: colors.surfaceVariant }]}>
                   <MaterialIcons name="account-balance" size={20} color={colors.primary} />
@@ -272,7 +272,7 @@ export function ProfileScreen() {
               <Ionicons name="checkmark-circle" size={20} color={colors.success} />
             </View>
 
-            <View style={[styles.accountRow, { backgroundColor: colors.surface + "80", borderColor: "rgba(255,255,255,0.05)" }]}>
+            <View style={[styles.accountRow, { backgroundColor: colors.surface + "80", borderColor: colors.border }]}>
               <View style={styles.accountLeft}>
                 <View style={[styles.accountIcon, { backgroundColor: colors.surfaceVariant }]}>
                   <Ionicons name="card" size={20} color="#ffd2dc" />
@@ -302,7 +302,7 @@ export function ProfileScreen() {
 
         {/* Security Update Card */}
         {editingSecurity && (
-          <View style={[styles.glassCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.primary + "80", marginTop: spacing.md }]}>
+          <View style={[styles.glassCard, { backgroundColor: colors.surface, borderColor: colors.primary + "80", marginTop: spacing.md }]}>
              <Text style={[styles.sectionHeading, { color: colors.primary }]}>Security Question</Text>
              <TextInput
                 style={[styles.inputField, { color: colors.text, borderColor: colors.border, backgroundColor: 'rgba(0,0,0,0.2)', marginBottom: 8 }]}
@@ -334,7 +334,7 @@ export function ProfileScreen() {
         )}
 
         {/* Preferences / Manage */}
-        <View style={[styles.preferencesList, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+        <View style={[styles.preferencesList, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <TouchableOpacity style={styles.prefItem} onPress={() => navigation.navigate("Friends")}>
             <View style={styles.prefLeft}>
               <Ionicons name="people-outline" size={22} color={colors.textSecondary} />
@@ -386,6 +386,15 @@ export function ProfileScreen() {
               <Text style={[styles.prefText, { color: colors.primary }]}>Theme ({isDark ? 'Dark' : 'Light'})</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+          <View style={[styles.prefDivider, { backgroundColor: colors.border }]} />
+
+          <TouchableOpacity style={styles.prefItem} onPress={() => Linking.openURL('https://smart-expense-website-2s26.onrender.com/')}>
+            <View style={styles.prefLeft}>
+              <Ionicons name="cloud-download-outline" size={22} color={colors.textSecondary} />
+              <Text style={[styles.prefText, { color: colors.primary }]}>Check for Updates</Text>
+            </View>
+            <Ionicons name="open-outline" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
           <View style={[styles.prefDivider, { backgroundColor: colors.border }]} />
 

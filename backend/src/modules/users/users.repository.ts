@@ -10,7 +10,7 @@ export const usersRepository = {
     return prisma.user.findFirst({ where: { email, deletedAt: null } });
   },
 
-  update(id: string, data: { name?: string; avatarUrl?: string | null }) {
+  update(id: string, data: { name?: string; avatarUrl?: string | null; pushToken?: string | null }) {
     return prisma.user.update({ where: { id }, data });
   },
 

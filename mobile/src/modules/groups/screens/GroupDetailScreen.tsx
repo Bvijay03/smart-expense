@@ -159,7 +159,7 @@ export function GroupDetailScreen({ route, navigation }: Props) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
         {/* ── Group Summary Hero ── */}
-        <View style={[styles.heroCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+        <View style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={[styles.heroOrb, { backgroundColor: colors.primary + "33" }]} />
           
           <View style={styles.heroLeft}>
@@ -227,14 +227,14 @@ export function GroupDetailScreen({ route, navigation }: Props) {
           <View style={styles.bentoGrid}>
             <View style={styles.quickActions}>
               <TouchableOpacity
-                style={[styles.quickAddBtnAction, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.primary + "4D" }]}
+                style={[styles.quickAddBtnAction, { backgroundColor: colors.surface, borderColor: colors.primary + "4D" }]}
                 onPress={() => navigation.navigate("AddSharedExpense", { groupId, members })}
               >
                 <Ionicons name="add" size={24} color={colors.primary} />
                 <Text style={[styles.quickAddText, { color: colors.primary }]}>Add Expense</Text>
               </TouchableOpacity>
               
-              <View style={[styles.groupMembersCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+              <View style={[styles.groupMembersCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <Text style={[styles.groupMembersTitle, { color: colors.text }]}>Group Members</Text>
                 <View style={styles.avatarsRow}>
                   {members.slice(0, 3).map((m, i) => (
@@ -262,7 +262,7 @@ export function GroupDetailScreen({ route, navigation }: Props) {
               <Text style={[styles.transactionsTitle, { color: colors.text }]}>Recent Transactions</Text>
               
               {expenses.data?.length ? expenses.data.map(exp => (
-                <TouchableOpacity key={exp.id} style={[styles.transactionItem, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}
+                <TouchableOpacity key={exp.id} style={[styles.transactionItem, { backgroundColor: colors.surface, borderColor: colors.border }]}
                   onPress={() => navigation.navigate("SharedExpenseDetail", { expenseId: exp.id, groupId })}
                 >
                   <View style={styles.transactionLeft}>
@@ -276,7 +276,7 @@ export function GroupDetailScreen({ route, navigation }: Props) {
                   </View>
                   <View style={styles.transactionRight}>
                     <Text style={[styles.transactionAmount, { color: colors.text }]}>₹{exp.amount.toFixed(2)}</Text>
-                    <View style={[styles.transactionDateBadge, { backgroundColor: colors.surfaceVariant, borderColor: "rgba(255,255,255,0.05)" }]}>
+                    <View style={[styles.transactionDateBadge, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
                       <Text style={[styles.transactionDate, { color: colors.textSecondary }]}>
                         {new Date(exp.expenseDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       </Text>
@@ -304,7 +304,7 @@ export function GroupDetailScreen({ route, navigation }: Props) {
             <View style={styles.settlementGrid}>
               {allSettlements.length > 0 ? (
                 allSettlements.map((s, idx) => (
-                  <View key={idx} style={[styles.settlementCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)", borderLeftColor: colors.success }]}>
+                  <View key={idx} style={[styles.settlementCard, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.success }]}>
                     <View style={styles.settlementLeft}>
                       <View style={[styles.settlementAvatar, { backgroundColor: colors.surfaceVariant, borderColor: colors.surface }]}>
                         <Text style={[styles.settlementAvatarText, { color: colors.textSecondary }]}>{s.fromName.charAt(0).toUpperCase()}</Text>
@@ -380,7 +380,7 @@ export function GroupDetailScreen({ route, navigation }: Props) {
               <View style={styles.requestsContainer}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Join Requests</Text>
                 {pendingRequests.map((req: any) => (
-                  <View key={req.id} style={[styles.requestRowCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)" }]}>
+                  <View key={req.id} style={[styles.requestRowCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                     <View style={styles.requestInfo}>
                       <Text style={[styles.requestName, { color: colors.text }]}>{req.user.name}</Text>
                       <Text style={[styles.requestEmail, { color: colors.textSecondary }]}>{req.user.email}</Text>

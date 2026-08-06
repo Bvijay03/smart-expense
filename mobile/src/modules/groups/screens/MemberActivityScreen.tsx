@@ -167,7 +167,7 @@ export function MemberActivityScreen({ route, navigation }: Props) {
 
       <View style={styles.filterSection}>
         <View style={styles.searchRow}>
-          <View style={[styles.searchInputContainer, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+          <View style={[styles.searchInputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Ionicons name="search" size={20} color={colors.textSecondary} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
@@ -178,7 +178,7 @@ export function MemberActivityScreen({ route, navigation }: Props) {
             />
           </View>
           <TouchableOpacity 
-            style={[styles.filterBtn, { backgroundColor: showFilters ? colors.primary : 'rgba(255,255,255,0.05)', borderColor: showFilters ? colors.primary : 'rgba(255,255,255,0.1)' }]}
+            style={[styles.filterBtn, { backgroundColor: showFilters ? colors.primary : colors.surface, borderColor: showFilters ? colors.primary : colors.border }]}
             onPress={() => setShowFilters(!showFilters)}
           >
             <Ionicons name="options" size={24} color={showFilters ? colors.background : colors.text} />
@@ -190,21 +190,21 @@ export function MemberActivityScreen({ route, navigation }: Props) {
             <View style={styles.filterRow}>
               <View style={styles.filterCol}>
                 <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>START DATE</Text>
-                <TextInput style={[styles.filterInput, { color: colors.text, backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]} placeholder="YYYY-MM-DD" placeholderTextColor={colors.textSecondary} value={startDate} onChangeText={setStartDate} />
+                <TextInput style={[styles.filterInput, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }]} placeholder="YYYY-MM-DD" placeholderTextColor={colors.textSecondary} value={startDate} onChangeText={setStartDate} />
               </View>
               <View style={styles.filterCol}>
                 <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>END DATE</Text>
-                <TextInput style={[styles.filterInput, { color: colors.text, backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]} placeholder="YYYY-MM-DD" placeholderTextColor={colors.textSecondary} value={endDate} onChangeText={setEndDate} />
+                <TextInput style={[styles.filterInput, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }]} placeholder="YYYY-MM-DD" placeholderTextColor={colors.textSecondary} value={endDate} onChangeText={setEndDate} />
               </View>
             </View>
             <View style={styles.filterRow}>
               <View style={styles.filterCol}>
                 <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>MIN AMOUNT</Text>
-                <TextInput style={[styles.filterInput, { color: colors.text, backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]} placeholder="0.00" keyboardType="numeric" placeholderTextColor={colors.textSecondary} value={minAmount} onChangeText={setMinAmount} />
+                <TextInput style={[styles.filterInput, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }]} placeholder="0.00" keyboardType="numeric" placeholderTextColor={colors.textSecondary} value={minAmount} onChangeText={setMinAmount} />
               </View>
               <View style={styles.filterCol}>
                 <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>MAX AMOUNT</Text>
-                <TextInput style={[styles.filterInput, { color: colors.text, backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]} placeholder="999.00" keyboardType="numeric" placeholderTextColor={colors.textSecondary} value={maxAmount} onChangeText={setMaxAmount} />
+                <TextInput style={[styles.filterInput, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }]} placeholder="999.00" keyboardType="numeric" placeholderTextColor={colors.textSecondary} value={maxAmount} onChangeText={setMaxAmount} />
               </View>
             </View>
           </View>
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: colors.border,
   },
   backBtn: {
     padding: 8,
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: 'JetBrains Mono',
   },
-  filterSection: { padding: spacing.md, borderBottomWidth: 1, borderBottomColor: 'rgba(255, 255, 255, 0.1)' },
+  filterSection: { padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   searchInputContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.sm, height: 44, borderRadius: 12, borderWidth: 1 },
   searchInput: { flex: 1, marginLeft: 8, fontSize: 16, fontFamily: 'Hanken Grotesk' },

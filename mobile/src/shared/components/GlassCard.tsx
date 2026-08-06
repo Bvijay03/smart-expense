@@ -52,7 +52,9 @@ export function GlassCard({
         {
           borderColor: colors.border,
           shadowColor: colors.cardShadow,
-          backgroundColor: `rgba(255, 255, 255, ${intensity / 400})`,
+          backgroundColor: colors.background === "#111318" 
+            ? `rgba(255, 255, 255, ${intensity / 400})` 
+            : colors.surface,
         },
         animatedStyle,
         style,

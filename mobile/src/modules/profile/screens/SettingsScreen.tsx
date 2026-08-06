@@ -48,7 +48,7 @@ export function SettingsScreen() {
         </View>
 
         {/* Personal Information */}
-        <View style={[styles.glassCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}>
+        <View style={[styles.glassCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="person" size={20} color={colors.primary} />
             <Text style={[styles.sectionTitle, { color: colors.primary }]}>Personal Information</Text>
@@ -109,14 +109,14 @@ export function SettingsScreen() {
         </View>
 
         {/* Data Management */}
-        <View style={[styles.glassCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}>
+        <View style={[styles.glassCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="server" size={20} color={colors.primary} />
             <Text style={[styles.sectionTitle, { color: colors.primary }]}>Data Management</Text>
           </View>
 
           <View style={styles.dataBlock}>
-            <View style={[styles.dataItem, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.05)" }]}>
+            <View style={[styles.dataItem, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.dataTitle, { color: colors.text }]}>Export Financial Data</Text>
                 <Text style={[styles.dataSub, { color: colors.textSecondary }]}>Download a CSV of all your transactions and groups.</Text>
@@ -141,7 +141,7 @@ export function SettingsScreen() {
         </View>
 
         {/* Security */}
-        <View style={[styles.glassCard, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}>
+        <View style={[styles.glassCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="shield-checkmark" size={20} color={colors.primary} />
             <Text style={[styles.sectionTitle, { color: colors.primary }]}>Security</Text>
@@ -160,7 +160,7 @@ export function SettingsScreen() {
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>NEW PASSWORD</Text>
               <TextInput style={[styles.input, { color: colors.text }]} secureTextEntry placeholder="Enter new password" placeholderTextColor={colors.textSecondary} value={newPassword} onChangeText={setNewPassword} />
             </View>
-            <TouchableOpacity style={[styles.updateBtn, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}>
+            <TouchableOpacity style={[styles.updateBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.updateBtnText, { color: colors.text }]}>UPDATE PASSWORD</Text>
             </TouchableOpacity>
           </View>
@@ -172,7 +172,7 @@ export function SettingsScreen() {
               <Ionicons name="finger-print" size={20} color={colors.textSecondary} />
               <Text style={[styles.secRowTitle, { color: colors.text }]}>Biometric Lock</Text>
             </View>
-            <View style={[styles.bioRow, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.05)" }]}>
+            <View style={[styles.bioRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <View>
                 <Text style={[styles.dataTitle, { color: colors.text }]}>Face ID / Touch ID</Text>
                 <Text style={[styles.dataSub, { color: colors.textSecondary }]}>Require biometrics to open app</Text>

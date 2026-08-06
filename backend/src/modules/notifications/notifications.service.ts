@@ -2,16 +2,35 @@ import { AppError } from "@/utils/app-error";
 import { NotificationType } from "../../../generated/prisma/client";
 import { notificationsRepository } from "./notifications.repository";
 import { CreateNotificationInput } from "./notifications.schema";
+import { notificationService as pushService } from "@/services/notificationService";
+import { usersRepository } from "@/modules/users/users.repository";
 
 export const notificationsService = {
   async create(input: CreateNotificationInput) {
-    return notificationsRepository.create({
+    const notification = await notificationsRepository.create({
       userId: input.userId,
       type: NotificationType[input.type],
       title: input.title,
       body: input.body,
       metadata: input.metadata,
     });
+
+    // Send push notification if user has a token
+    try {
+      const user = await usersRepository.findById(input.userId);
+      if (user && user.pushToken) {
+        await pushService.sendPushNotification({
+          to: user.pushToken,
+          title: input.title,
+          body: input.body,
+          data: { type: input.type, ...input.metadata },
+        });
+      }
+    } catch (err) {
+      console.error("Failed to send push notification:", err);
+    }
+
+    return notification;
   },
 
   async list(userId: string) {

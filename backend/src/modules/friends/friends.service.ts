@@ -2,6 +2,7 @@ import { AppError } from "@/utils/app-error";
 import { friendsRepository } from "./friends.repository";
 import { usersRepository } from "../users/users.repository";
 import { settlementsRepository } from "../settlements/settlements.repository";
+import { notificationsService } from "../notifications/notifications.service";
 import { FriendRequestStatus } from "../../../generated/prisma/client";
 
 export const friendsService = {
@@ -25,7 +26,20 @@ export const friendsService = {
       }
     }
 
-    return friendsRepository.createFriendRequest(initiatorId, receiver.id);
+    const request = await friendsRepository.createFriendRequest(initiatorId, receiver.id);
+    const initiator = await usersRepository.findById(initiatorId);
+
+    if (initiator) {
+      await notificationsService.create({
+        userId: receiver.id,
+        type: "GENERAL",
+        title: "Friend Request",
+        body: `${initiator.name} sent you a friend request`,
+        metadata: { friendshipId: request.id },
+      }).catch(console.error);
+    }
+
+    return request;
   },
 
   async acceptRequest(userId: string, friendshipId: string) {

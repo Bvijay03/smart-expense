@@ -2,6 +2,7 @@ import { AppError } from "@/utils/app-error";
 import { decimalToNumber, roundMoney } from "@/utils/helpers";
 import { groupsService } from "@/modules/groups/groups.service";
 import { settlementsService } from "@/modules/settlements/settlements.service";
+import { notificationsService } from "@/modules/notifications/notifications.service";
 import { sharedExpensesRepository } from "./shared-expenses.repository";
 import { CreateSharedExpenseInput } from "./shared-expenses.schema";
 
@@ -111,6 +112,24 @@ export const sharedExpensesService = {
     });
 
     await settlementsService.recalculate(groupId);
+
+    // Send notifications to split participants
+    const fullExpense = await sharedExpensesRepository.findById(expense!.id, groupId);
+    if (fullExpense) {
+      const payerName = fullExpense.paidBy.name;
+      const groupName = fullExpense.group.name;
+      
+      for (const split of fullExpense.splits) {
+        if (split.userId !== input.paidById) {
+          await notificationsService.create({
+            userId: split.userId,
+            type: "GENERAL",
+            title: "New Expense Added",
+            body: `${payerName} added "${input.description}" to ${groupName}. You owe ₹${decimalToNumber(split.amountOwed)}.`,
+          }).catch(console.error);
+        }
+      }
+    }
 
     return formatSharedExpense(expense!);
   },

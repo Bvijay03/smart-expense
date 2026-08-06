@@ -53,6 +53,7 @@ model User {
   deletedAt     DateTime? @map("deleted_at")
   securityQuestion String?   @map("security_question")
   securityAnswer   String?   @map("security_answer")
+  pushToken        String?   @map("push_token")
 
   refreshTokens     RefreshToken[]
   expenses          Expense[]
