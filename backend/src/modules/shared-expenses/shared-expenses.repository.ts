@@ -66,6 +66,7 @@ export const sharedExpensesRepository = {
     return prisma.sharedExpense.findFirst({
       where: { id, groupId, deletedAt: null },
       include: {
+        group: { select: { id: true, name: true } },
         splits: {
           include: {
             user: { select: { id: true, name: true, email: true } },

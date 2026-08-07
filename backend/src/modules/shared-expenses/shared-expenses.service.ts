@@ -57,9 +57,7 @@ function computeSplits(
   });
 }
 
-function formatSharedExpense(expense: NonNullable<
-  Awaited<ReturnType<typeof sharedExpensesRepository.findById>>
->) {
+function formatSharedExpense(expense: any) {
   return {
     id: expense.id,
     groupId: expense.groupId,

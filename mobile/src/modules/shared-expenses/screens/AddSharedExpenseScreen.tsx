@@ -117,7 +117,7 @@ export function AddSharedExpenseScreen({ route, navigation }: Props) {
     onError: (err) => Alert.alert("Error", getErrorMessage(err)),
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     if (selectedMembers.length === 0) {
       Alert.alert("Error", "Select at least one member to split with");
       return;
@@ -129,24 +129,58 @@ export function AddSharedExpenseScreen({ route, navigation }: Props) {
       return;
     }
 
-    const splits = selectedMembers.map((m) => ({
-      userId: m.id,
-      value: splitType === "EQUAL" ? 0 : splitType === "PERCENTAGE" ? 100 / selectedMembers.length : amount / selectedMembers.length,
-    }));
+    const submitMutation = () => {
+      const splits = selectedMembers.map((m) => ({
+        userId: m.id,
+        value: splitType === "EQUAL" ? 0 : splitType === "PERCENTAGE" ? 100 / selectedMembers.length : amount / selectedMembers.length,
+      }));
 
-    setLoading(true);
-    mutation.mutate(
-      {
-        description: data.description,
-        amount,
-        category: data.category,
-        expenseDate: data.expenseDate,
-        paidById,
-        splitType,
-        splits,
-      },
-      { onSettled: () => setLoading(false) },
-    );
+      setLoading(true);
+      mutation.mutate(
+        {
+          description: data.description,
+          amount,
+          category: data.category,
+          expenseDate: data.expenseDate,
+          paidById,
+          splitType,
+          splits,
+        },
+        { onSettled: () => setLoading(false) },
+      );
+    };
+
+    try {
+      setLoading(true);
+      const res = await sharedExpenseService.list(groupId);
+      setLoading(false);
+      
+      const recentExpenses = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+      const duplicate = recentExpenses.find((e: any) => {
+        const expenseDate = new Date(e.expenseDate);
+        return e.amount === amount && expenseDate >= threeDaysAgo;
+      });
+
+      if (duplicate) {
+        Alert.alert(
+          "Possible Duplicate",
+          `An expense of ₹${amount} was recently added to this group by ${duplicate.paidBy?.name || 'someone'}. Are you sure you want to add this again?`,
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Add Anyway", onPress: submitMutation, style: "destructive" }
+          ]
+        );
+        return;
+      }
+    } catch (err) {
+      setLoading(false);
+      // Proceed if list fetch fails, no need to block
+    }
+
+    submitMutation();
   };
 
   return (

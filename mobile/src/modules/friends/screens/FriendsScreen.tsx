@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     height: 64,
     paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: "rgba(255, 255, 255, 0.12)",
   },
   headerTitle: {
     fontFamily: 'Hanken Grotesk',
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
   },
   requestText: {
     marginLeft: spacing.sm,
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
   },
   friendDetails: {
     marginLeft: spacing.md,

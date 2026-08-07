@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: "rgba(255, 255, 255, 0.12)",
   },
   backBtn: {
     padding: 8,
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: 'JetBrains Mono',
   },
-  filterSection: { padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
+  filterSection: { padding: spacing.md, borderBottomWidth: 1, borderBottomColor: "rgba(255, 255, 255, 0.12)" },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   searchInputContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.sm, height: 44, borderRadius: 12, borderWidth: 1 },
   searchInput: { flex: 1, marginLeft: 8, fontSize: 16, fontFamily: 'Hanken Grotesk' },
