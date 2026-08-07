@@ -5,6 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RootNavigator } from "@/shared/navigation/RootNavigator";
 import { useThemeStore } from "@/shared/hooks/useTheme";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
+
+SplashScreen.preventAutoHideAsync();
 
 // ─── Error Boundary ────────────────────────────────────────────────────────
 class ErrorBoundary extends Component<
@@ -62,8 +66,14 @@ export default function App() {
     "Hanken Grotesk": HankenGrotesk_400Regular,
   });
 
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
   if (!fontsLoaded) {
-    return null; // or a custom splash screen
+    return null; // The native splash screen stays visible
   }
 
   return (
