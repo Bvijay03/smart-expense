@@ -97,6 +97,8 @@
 | File | Purpose | What it can do |
 |------|---------|----------------|
 | `shared-expenses.router.ts` | Route definitions | List, create, delete shared expenses within a group |
+| `usePushNotifications.ts` | **Push Notifications.** Handles registration of device push tokens, SDK interaction with `expo-notifications`, and passing tokens to the backend. |
+| `useThemeStore.ts` | **Global Theme State.** Zustand store to manage Light vs Dark mode preference and persist it via AsyncStorage. |
 | `shared-expenses.service.ts` | Business logic | Create a shared expense split equally among all selected members. Records who paid. Auto-creates expense splits for each member. Deletes expense and splits together |
 | `shared-expenses.repository.ts` | Database queries | CRUD for shared expenses and their splits |
 

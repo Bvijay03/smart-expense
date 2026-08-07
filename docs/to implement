@@ -16,17 +16,18 @@
 - [x] Group invite code + admin approval workflow
 - [x] Notifications tab with live unread badge
 - [x] Admin join-request review UI in GroupDetailScreen
+- [x] Duplicate detection warning when adding identical group expenses
 
 ## FUTURE — After Offline Migration
 - [x] Recurring expenses (monthly rent, subscriptions)
 - [x] Export to CSV (DB direct export via psql COPY)
+- [x] Split by custom percentage / exact input per member
+- [x] Local push notifications / reminders (you owe X)
 - [ ] Export to PDF
 - [ ] Receipt photo attachment
-- [ ] Split by custom percentage / exact input per member
-- [ ] Local push notifications / reminders (you owe X)
 - [ ] Group invite via QR code
-- [ ] Multi-currency support
-- [ ] Voice entry — "spent 200 on food" (NLP integration)
+- [ ] Multi-currency support (CANCELLED)
+- [ ] Voice entry — "spent 200 on food" (NLP integration) (CANCELLED)
 
 ## DONE — Core
 - [x] Add members by name (email optional)
@@ -36,8 +37,11 @@
 - [x] JWT auth with refresh tokens
 - [x] Settlement engine (min-cash-flow algorithm)
 - [x] In-app notifications (budget alerts, group events)
+- [x] Push notifications via `expo-notifications`
 - [x] Recurring expenses backend (full CRUD + daily process trigger)
 - [x] /recurring route registered and wired
 - [x] Categories backend (full CRUD) + migration applied
 - [x] JoinRequest model + migration applied
 - [x] TypeScript: 0 errors across mobile + backend
+- [x] Dynamic Glassmorphism "Luminous Ledger" UI Theme
+- [x] Over-The-Air (OTA) Updates via `expo-updates`
