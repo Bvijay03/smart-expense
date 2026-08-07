@@ -112,7 +112,7 @@ function App() {
             <div className="version-badge">Version 1.0.0 (Latest)</div>
             
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
-              <a href="/smart-expense-latest.apk" download className="btn btn-primary" style={{ padding: '1rem 2rem' }}>
+              <a href="/smart-expense.apk" download className="btn btn-primary" style={{ padding: '1rem 2rem' }}>
                 <Download size={20} />
                 Download APK for Android
               </a>
