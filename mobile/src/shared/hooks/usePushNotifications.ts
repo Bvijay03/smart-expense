@@ -77,6 +77,11 @@ async function registerForPushNotificationsAsync() {
       console.log('Failed to get push token for push notification!');
       return;
     }
+
+    if (Constants.appOwnership === 'expo') {
+      console.log('Running in Expo Go: Push notifications are not supported. Skipping token registration.');
+      return;
+    }
     
     // Expo config requires projectId in eas.json or app.json
     try {

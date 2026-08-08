@@ -23,7 +23,10 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font",
+      "expo-notifications",
+      "expo-image-picker"
     ],
     "extra": {
       "apiUrl": "https://smart-expense-api-16xp.onrender.com/api/v1",

@@ -8,7 +8,12 @@ import { View, Text, ScrollView, StyleSheet } from "react-native";
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
-SplashScreen.preventAutoHideAsync();
+// Keep the splash screen visible while we fetch resources
+try {
+  SplashScreen.preventAutoHideAsync().catch(console.warn);
+} catch (e) {
+  console.warn("Failed to prevent splash screen auto hide", e);
+}
 
 // ─── Error Boundary ────────────────────────────────────────────────────────
 class ErrorBoundary extends Component<

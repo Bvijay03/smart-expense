@@ -26,12 +26,12 @@ export function FriendsScreen() {
 
   const { data: requestsRes, isLoading: isLoadingRequests } = useQuery({
     queryKey: ["friendRequests"],
-    queryFn: () => friendsService.getRequests(),
+    queryFn: () => friendsService.getRequests().then(r => r.data.data),
   });
 
   const { data: friendsRes, isLoading: isLoadingFriends } = useQuery({
     queryKey: ["friends"],
-    queryFn: () => friendsService.getFriends(),
+    queryFn: () => friendsService.getFriends().then(r => r.data.data),
   });
 
   const sendRequest = useMutation({
@@ -60,8 +60,8 @@ export function FriendsScreen() {
     },
   });
 
-  const requests = requestsRes?.data?.data || [];
-  const friends = friendsRes?.data?.data || [];
+  const requests = requestsRes || [];
+  const friends = friendsRes || [];
 
   const filteredFriends = friends.filter((f: any) =>
     f.friend.name.toLowerCase().includes(search.toLowerCase()) ||
