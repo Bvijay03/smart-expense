@@ -84,7 +84,10 @@ export function SharedExpenseDetailScreen({ route }: Props) {
         {/* Action Header */}
         <View style={styles.actionHeader}>
           <Text style={[styles.actionTitle, { color: colors.text }]}>Transaction Details</Text>
-          <TouchableOpacity style={[styles.editBtn, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}>
+          <TouchableOpacity 
+            style={[styles.editBtn, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}
+            onPress={() => Alert.alert("Coming Soon", "Editing shared expenses is not yet supported.")}
+          >
             <Ionicons name="pencil" size={14} color={colors.textSecondary} />
             <Text style={[styles.editBtnText, { color: colors.textSecondary }]}>EDIT</Text>
           </TouchableOpacity>

@@ -195,7 +195,10 @@ export function ExpensesScreen() {
             ) : null}
           </View>
 
-          <TouchableOpacity style={[styles.filterBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <TouchableOpacity 
+            style={[styles.filterBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={() => navigation.navigate("Search")}
+          >
             <Ionicons name="filter-outline" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Dimensions, ScrollView, StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { Dimensions, ScrollView, StyleSheet, Text, View, TouchableOpacity, Alert } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { PieChart } from "react-native-chart-kit";
 import { Ionicons } from "@expo/vector-icons";
 import { analyticsService } from "@/shared/services/modules";
@@ -20,6 +21,7 @@ const CHART_COLORS = [
 
 export function AnalyticsScreen() {
   const { colors } = useThemeStore();
+  const navigation = useNavigation<any>();
 
   const summary = useQuery({
     queryKey: ["analytics", "summary"],
@@ -190,7 +192,10 @@ export function AnalyticsScreen() {
         <View style={[styles.glassCard, { marginTop: spacing.md, backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.budgetHeader}>
             <Text style={[styles.budgetTitle, { color: colors.text }]}>Budget Management</Text>
-            <TouchableOpacity style={[styles.budgetAddBtn, { backgroundColor: colors.surfaceVariant }]}>
+            <TouchableOpacity 
+              style={[styles.budgetAddBtn, { backgroundColor: colors.surfaceVariant }]}
+              onPress={() => navigation.navigate("Budgets")}
+            >
               <Ionicons name="add" size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>
@@ -211,7 +216,7 @@ export function AnalyticsScreen() {
                       <Text style={[styles.budgetAmounts, { color: perc >= 90 ? colors.error : colors.textSecondary }]}>
                         ₹{b.spent} / ₹{b.limit}
                       </Text>
-                      <TouchableOpacity>
+                      <TouchableOpacity onPress={() => navigation.navigate("Budgets")}>
                         <Ionicons name="pencil-outline" size={16} color={colors.textSecondary} />
                       </TouchableOpacity>
                     </View>

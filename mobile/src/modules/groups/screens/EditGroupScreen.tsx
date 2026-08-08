@@ -128,7 +128,10 @@ export function EditGroupScreen({ route, navigation }: Props) {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Members</Text>
-              <TouchableOpacity style={styles.addMemberBtn} onPress={() => navigation.navigate("InviteMember" as any)}>
+              <TouchableOpacity 
+                style={styles.addMemberBtn} 
+                onPress={() => Alert.alert("Invite Members", "Please use the 'Admin' tab on the Group Details screen to add or invite members.")}
+              >
                 <Ionicons name="add" size={16} color={colors.primary} />
                 <Text style={[styles.addMemberText, { color: colors.primary }]}>ADD MEMBER</Text>
               </TouchableOpacity>

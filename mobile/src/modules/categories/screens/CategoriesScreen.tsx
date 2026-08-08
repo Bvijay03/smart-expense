@@ -105,7 +105,10 @@ export function CategoriesScreen() {
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <Text style={[styles.title, { color: colors.text }]}>Categories</Text>
-          <TouchableOpacity style={styles.editBtn}>
+          <TouchableOpacity 
+            style={styles.editBtn}
+            onPress={() => Alert.alert("Coming Soon", "Category editing will be available soon.")}
+          >
             <Ionicons name="pencil" size={16} color={colors.primary} />
             <Text style={[styles.editBtnText, { color: colors.primary }]}>EDIT</Text>
           </TouchableOpacity>

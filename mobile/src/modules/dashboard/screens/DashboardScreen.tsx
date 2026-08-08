@@ -97,7 +97,7 @@ export function DashboardScreen() {
     >
       {/* TopAppBar */}
       <View style={styles.topAppBar}>
-        <TouchableOpacity style={styles.iconBtn}>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate("Budgets")}>
           <Ionicons name="wallet-outline" size={24} color={colors.textSecondary} />
         </TouchableOpacity>
         <Text style={[styles.appTitle, { color: colors.primary }]}>Smart Expense</Text>

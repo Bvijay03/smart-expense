@@ -156,7 +156,9 @@ export function AddExpenseScreen() {
         <View style={styles.categoriesSection}>
           <View style={styles.categoriesHeader}>
             <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>CATEGORY</Text>
-            <TouchableOpacity><Text style={{ color: colors.primary, fontSize: 14 }}>View All</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate("Categories")}>
+              <Text style={{ color: colors.primary, fontSize: 14 }}>View All</Text>
+            </TouchableOpacity>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesScroll}>
             {categories.map((cat) => {

@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   View,
   Image,
-  Switch
+  Switch,
+  Alert
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeStore } from "@/shared/hooks/useTheme";
@@ -55,21 +56,21 @@ export function SettingsScreen() {
           </View>
 
           <View style={styles.personalInfoBody}>
-            <View style={styles.avatarSection}>
-              <View style={[styles.avatarContainer, { borderColor: colors.border }]}>
-                {user?.avatarUrl ? (
-                  <Image source={{ uri: user.avatarUrl }} style={styles.avatarImg} />
-                ) : (
-                  <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceVariant }]}>
-                    <Text style={[styles.avatarInitials, { color: colors.primary }]}>{user?.name?.charAt(0) || "A"}</Text>
+              <TouchableOpacity style={styles.avatarSection} onPress={() => Alert.alert("Coming Soon", "Avatar change will be available soon.")}>
+                <View style={[styles.avatarContainer, { borderColor: colors.border }]}>
+                  {user?.avatarUrl ? (
+                    <Image source={{ uri: user.avatarUrl }} style={styles.avatarImg} />
+                  ) : (
+                    <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceVariant }]}>
+                      <Text style={[styles.avatarInitials, { color: colors.primary }]}>{user?.name?.charAt(0) || "A"}</Text>
+                    </View>
+                  )}
+                  <View style={styles.avatarCamera}>
+                    <Ionicons name="camera" size={16} color="#FFF" />
                   </View>
-                )}
-                <View style={styles.avatarCamera}>
-                  <Ionicons name="camera" size={16} color="#FFF" />
                 </View>
-              </View>
-              <Text style={[styles.avatarChangeText, { color: colors.textSecondary }]}>CHANGE AVATAR</Text>
-            </View>
+                <Text style={[styles.avatarChangeText, { color: colors.textSecondary }]}>CHANGE AVATAR</Text>
+              </TouchableOpacity>
 
             <View style={styles.formSection}>
               <View style={[styles.inputGroup, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
@@ -102,7 +103,10 @@ export function SettingsScreen() {
           </View>
 
           <View style={styles.saveActionRow}>
-            <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}>
+            <TouchableOpacity 
+              style={[styles.saveBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+              onPress={() => Alert.alert("Coming Soon", "Settings save will be available soon.")}
+            >
               <Text style={styles.saveBtnText}>SAVE CHANGES</Text>
             </TouchableOpacity>
           </View>
@@ -121,7 +125,10 @@ export function SettingsScreen() {
                 <Text style={[styles.dataTitle, { color: colors.text }]}>Export Financial Data</Text>
                 <Text style={[styles.dataSub, { color: colors.textSecondary }]}>Download a CSV of all your transactions and groups.</Text>
               </View>
-              <TouchableOpacity style={[styles.outlineBtn, { borderColor: colors.border }]}>
+              <TouchableOpacity 
+                style={[styles.outlineBtn, { borderColor: colors.border }]}
+                onPress={() => Alert.alert("Coming Soon", "Export CSV will be available soon.")}
+              >
                 <Ionicons name="download" size={16} color={colors.text} />
                 <Text style={[styles.outlineBtnText, { color: colors.text }]}>EXPORT CSV</Text>
               </TouchableOpacity>
@@ -132,7 +139,10 @@ export function SettingsScreen() {
                 <Text style={[styles.dataTitle, { color: colors.error }]}>Delete Account</Text>
                 <Text style={[styles.dataSub, { color: colors.textSecondary }]}>Permanently remove your account and all associated data.</Text>
               </View>
-              <TouchableOpacity style={[styles.outlineBtn, { borderColor: colors.error, backgroundColor: colors.error + "1A" }]}>
+              <TouchableOpacity 
+                style={[styles.outlineBtn, { borderColor: colors.error, backgroundColor: colors.error + "1A" }]}
+                onPress={() => Alert.alert("Coming Soon", "Account deletion will be available soon.")}
+              >
                 <Ionicons name="trash" size={16} color={colors.error} />
                 <Text style={[styles.outlineBtnText, { color: colors.error }]}>DELETE</Text>
               </TouchableOpacity>
@@ -160,7 +170,10 @@ export function SettingsScreen() {
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>NEW PASSWORD</Text>
               <TextInput style={[styles.input, { color: colors.text }]} secureTextEntry placeholder="Enter new password" placeholderTextColor={colors.textSecondary} value={newPassword} onChangeText={setNewPassword} />
             </View>
-            <TouchableOpacity style={[styles.updateBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <TouchableOpacity 
+              style={[styles.updateBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              onPress={() => Alert.alert("Coming Soon", "Password update will be available soon.")}
+            >
               <Text style={[styles.updateBtnText, { color: colors.text }]}>UPDATE PASSWORD</Text>
             </TouchableOpacity>
           </View>
@@ -212,7 +225,7 @@ export function SettingsScreen() {
                     <Text style={[styles.deviceSub, { color: colors.textSecondary }]}>Last active 2d ago</Text>
                   </View>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => Alert.alert("Coming Soon", "Revoking devices will be available soon.")}>
                   <Text style={[styles.revokeText, { color: colors.error }]}>REVOKE</Text>
                 </TouchableOpacity>
               </View>

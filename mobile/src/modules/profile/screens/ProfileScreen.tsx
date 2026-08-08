@@ -254,7 +254,7 @@ export function ProfileScreen() {
           <View style={[styles.glassCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.cardHeaderRow}>
               <Text style={[styles.sectionHeading, { color: colors.primary, borderBottomWidth: 0, marginBottom: 0 }]}>Connected Accounts</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => Alert.alert("Coming Soon", "Bank account syncing will be available soon.")}>
                 <Ionicons name="add-circle" size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>

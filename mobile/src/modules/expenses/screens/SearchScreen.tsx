@@ -11,6 +11,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useThemeStore } from "@/shared/hooks/useTheme";
 import { spacing } from "@/shared/theme";
 import { useNavigation } from "@react-navigation/native";
+import { useQuery } from "@tanstack/react-query";
+import { expenseService } from "@/shared/services/modules";
+import { LoadingState } from "@/shared/components/LoadingState";
+import { ErrorState } from "@/shared/components/ErrorState";
 
 export function SearchScreen() {
   const { colors } = useThemeStore();
@@ -37,10 +41,36 @@ export function SearchScreen() {
     );
   };
 
-  const matches = [
-    { id: '1', title: 'Uber Ride', date: 'Today, 2:30 PM', amount: '-$24.50', icon: 'car', color: '#FF9500' },
-    { id: '2', title: 'Apple Store', date: 'Yesterday', amount: '-$1,299.00', icon: 'bag', color: colors.primary },
-  ];
+  const { data: rawExpenses, isLoading, isError, refetch } = useQuery({
+    queryKey: ["expenses", { limit: 100 }],
+    queryFn: () => expenseService.list({ limit: 100 }).then(r => r.data.data.items),
+  });
+
+  // Client-side filtering
+  const filteredMatches = React.useMemo(() => {
+    if (!rawExpenses) return [];
+    
+    return rawExpenses.filter(exp => {
+      // 1. Search Query
+      if (searchQuery && !exp.notes?.toLowerCase().includes(searchQuery.toLowerCase()) && !exp.category.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+      
+      // 2. Categories
+      if (activeCategories.length > 0 && !activeCategories.includes(exp.category)) {
+        return false;
+      }
+      
+      // 3. Amount Range
+      if (minAmount && exp.amount < parseFloat(minAmount)) return false;
+      if (maxAmount && exp.amount > parseFloat(maxAmount)) return false;
+
+      // Note: Date Range and Transaction Type are complex to implement purely on client side without a date picker, 
+      // so we use the basic filters above for this demo.
+
+      return true;
+    });
+  }, [rawExpenses, searchQuery, activeCategories, minAmount, maxAmount]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -187,29 +217,44 @@ export function SearchScreen() {
 
         {/* Results Preview */}
         <View style={styles.resultsSection}>
-          <Text style={[styles.filterTitle, { color: colors.textSecondary }]}>Recent Matches</Text>
-          <View style={styles.resultsList}>
-            {matches.map(match => (
-              <TouchableOpacity key={match.id} style={[styles.matchItem, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}>
-                <View style={styles.matchLeft}>
-                  <View style={[styles.matchIconBox, { backgroundColor: match.color + "33", borderColor: match.color + "4D" }]}>
-                    <Ionicons name={match.icon as any} size={24} color={match.color} />
-                  </View>
-                  <View>
-                    <Text style={[styles.matchTitle, { color: colors.text }]}>{match.title}</Text>
-                    <Text style={[styles.matchDate, { color: colors.textSecondary }]}>{match.date}</Text>
-                  </View>
-                </View>
-                <Text style={[styles.matchAmount, { color: colors.text }]}>{match.amount}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <Text style={[styles.filterTitle, { color: colors.textSecondary }]}>Search Results</Text>
+          {isLoading ? (
+            <LoadingState />
+          ) : isError ? (
+            <ErrorState message="Failed to load expenses" onRetry={refetch} />
+          ) : (
+            <View style={styles.resultsList}>
+              {filteredMatches.length === 0 ? (
+                <Text style={{ color: colors.textSecondary, textAlign: 'center', marginTop: 20 }}>No expenses found matching filters.</Text>
+              ) : (
+                filteredMatches.map(match => {
+                  const catColor = categories.find(c => c.id === match.category)?.color || colors.primary;
+                  return (
+                    <TouchableOpacity key={match.id} style={[styles.matchItem, { backgroundColor: "rgba(255,255,255,0.05)", borderColor: colors.border }]}>
+                      <View style={styles.matchLeft}>
+                        <View style={[styles.matchIconBox, { backgroundColor: catColor + "33", borderColor: catColor + "4D" }]}>
+                          <Ionicons name="receipt" size={24} color={catColor} />
+                        </View>
+                        <View>
+                          <Text style={[styles.matchTitle, { color: colors.text }]}>{match.notes || match.category}</Text>
+                          <Text style={[styles.matchDate, { color: colors.textSecondary }]}>
+                            {new Date(match.expenseDate).toLocaleDateString()}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={[styles.matchAmount, { color: colors.text }]}>${match.amount.toFixed(2)}</Text>
+                    </TouchableOpacity>
+                  );
+                })
+              )}
+            </View>
+          )}
         </View>
       </ScrollView>
 
       {/* Fixed Bottom Action */}
       <View style={styles.bottomActionArea}>
-        <TouchableOpacity style={[styles.applyBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}>
+        <TouchableOpacity style={[styles.applyBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]} onPress={() => refetch()}>
           <Text style={styles.applyBtnText}>APPLY FILTERS</Text>
           <Ionicons name="filter" size={20} color="#000" />
         </TouchableOpacity>

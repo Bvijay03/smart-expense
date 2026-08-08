@@ -33,4 +33,5 @@ export type RootStackParamList = {
   MemberActivity: { groupId: string; groupName: string; memberId: string; memberName: string };
   Categories: undefined;
   Recurring: undefined;
+  Search: undefined;
 };

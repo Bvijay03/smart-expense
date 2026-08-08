@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Share,
 } from "react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,6 +24,7 @@ export function FriendsScreen() {
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState("");
+  const searchInputRef = React.useRef<TextInput>(null);
 
   const { data: requestsRes, isLoading: isLoadingRequests } = useQuery({
     queryKey: ["friendRequests"],
@@ -73,7 +75,7 @@ export function FriendsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: colors.primary }]}>Friends</Text>
-        <TouchableOpacity style={styles.headerIcon}>
+        <TouchableOpacity style={styles.headerIcon} onPress={() => searchInputRef.current?.focus()}>
           <Ionicons name="person-add" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
@@ -83,6 +85,7 @@ export function FriendsScreen() {
         <View style={[styles.searchContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
           <TextInput
+            ref={searchInputRef}
             style={[styles.searchInput, { color: colors.text }]}
             placeholder="Search friends by name or email"
             placeholderTextColor={colors.textSecondary}
@@ -94,6 +97,15 @@ export function FriendsScreen() {
               }
             }}
           />
+          {search.includes("@") && (
+            <TouchableOpacity 
+              style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: colors.primary, borderRadius: 8, marginLeft: 8 }}
+              onPress={() => sendRequest.mutate(search)}
+              disabled={sendRequest.isPending}
+            >
+              <Text style={{ color: "#000", fontWeight: "600", fontSize: 12 }}>ADD</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Friend Requests */}
@@ -182,17 +194,23 @@ export function FriendsScreen() {
                   </View>
 
                   {!settled ? (
-                    <TouchableOpacity style={[
-                      styles.settleBtn,
-                      youOwe ? [styles.settleBtnPrimary, { backgroundColor: colors.primary }] : [styles.settleBtnSecondary, { borderColor: colors.success }]
-                    ]}>
+                    <TouchableOpacity 
+                      style={[
+                        styles.settleBtn,
+                        youOwe ? [styles.settleBtnPrimary, { backgroundColor: colors.primary }] : [styles.settleBtnSecondary, { borderColor: colors.success }]
+                      ]}
+                      onPress={() => Alert.alert("Coming Soon", "Individual friend settlements will be available in a future update.")}
+                    >
                       <Text style={[
                         styles.settleBtnText,
                         youOwe ? { color: "#000" } : { color: colors.success }
                       ]}>SETTLE</Text>
                     </TouchableOpacity>
                   ) : (
-                    <TouchableOpacity style={styles.moreBtn}>
+                    <TouchableOpacity 
+                      style={styles.moreBtn}
+                      onPress={() => Alert.alert("Coming Soon", "Friend management options will be available soon.")}
+                    >
                       <Ionicons name="ellipsis-vertical" size={20} color={colors.textSecondary} />
                     </TouchableOpacity>
                   )}
@@ -210,7 +228,14 @@ export function FriendsScreen() {
               Splitting bills is easier with friends. Invite them to Smart Expense.
             </Text>
           </View>
-          <TouchableOpacity style={[styles.shareBtn, { backgroundColor: colors.primary }]}>
+          <TouchableOpacity 
+            style={[styles.shareBtn, { backgroundColor: colors.primary }]}
+            onPress={() => {
+              Share.share({
+                message: "Hey! Join me on Smart Expense to easily split our bills. Download it here: https://smartexpense.app",
+              });
+            }}
+          >
             <Ionicons name="share-social" size={24} color="#000" />
           </TouchableOpacity>
         </View>

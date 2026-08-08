@@ -40,56 +40,28 @@ export function NotificationsScreen() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
-  const unreadNotifications = [
-    {
-      id: "1",
-      type: "alert",
-      title: "Budget Alert: Food",
-      time: "2m ago",
-      body: "You have used 90% of your monthly food budget. Remaining: $45.00",
-      icon: "warning",
-      color: colors.error,
-    },
-    {
-      id: "2",
-      type: "success",
-      title: "Settlement Received",
-      time: "1h ago",
-      body: 'Sarah settled $15.00 for "Coffee & Bagels".',
-      icon: "wallet",
-      color: colors.success, // secondary-container in spec
-    },
-  ];
+  const unreadNotifications = realData?.filter(n => !n.read) || [];
+  const readNotifications = realData?.filter(n => n.read) || [];
 
-  const readNotifications = [
-    {
-      id: "3",
-      type: "info",
-      title: "New Group Member",
-      time: "Yesterday",
-      body: 'John joined the group "Ski Trip 2024".',
-      icon: "person-add",
-      color: colors.primary,
-    },
-    {
-      id: "4",
-      type: "system",
-      title: "App Update",
-      time: "Oct 24",
-      body: "Smart Expense v2.4 is now available with new analytics features.",
-      icon: "information-circle",
-      color: colors.textSecondary,
-    },
-    {
-      id: "5",
-      type: "payment",
-      title: "Payment Sent",
-      time: "Oct 22",
-      body: 'You paid Mike $45.00 for "Dinner at Mario\'s".',
-      icon: "cash",
-      color: colors.textSecondary,
-    },
-  ];
+  const getIconForType = (type: string) => {
+    switch (type) {
+      case 'alert': return 'warning';
+      case 'success': return 'wallet';
+      case 'info': return 'information-circle';
+      case 'payment': return 'cash';
+      default: return 'notifications';
+    }
+  };
+
+  const getColorForType = (type: string) => {
+    switch (type) {
+      case 'alert': return colors.error;
+      case 'success': return colors.success;
+      case 'info': return colors.primary;
+      case 'payment': return colors.textSecondary;
+      default: return colors.primary;
+    }
+  };
 
   if (isLoading) return <LoadingState />;
   if (isError) return <ErrorState message="Failed to load notifications" onRetry={refetch} />;
@@ -120,24 +92,35 @@ export function NotificationsScreen() {
         </View>
 
         <View style={styles.list}>
-          {unreadNotifications.map((notif) => (
-            <TouchableOpacity key={notif.id} style={[styles.glassPanel, { borderColor: colors.border, backgroundColor: "rgba(255,255,255,0.05)" }]}>
-              {/* Unread Indicator Glow */}
-              <View style={[styles.unreadIndicator, { backgroundColor: notif.color, shadowColor: notif.color }]} />
-              
-              <View style={[styles.iconBox, { backgroundColor: notif.color + "33", borderColor: notif.color + "4D" }]}>
-                <Ionicons name={notif.icon as any} size={24} color={notif.color} />
-              </View>
-              
-              <View style={styles.notifBody}>
-                <View style={styles.notifHeader}>
-                  <Text style={[styles.notifTitle, { color: colors.text }]} numberOfLines={1}>{notif.title}</Text>
-                  <Text style={[styles.notifTime, { color: colors.textSecondary }]}>{notif.time}</Text>
+          {unreadNotifications.length === 0 && readNotifications.length === 0 ? (
+            <EmptyState icon="notifications-off-outline" title="No Notifications" message="You have no notifications." />
+          ) : unreadNotifications.length === 0 ? (
+            <Text style={{ color: colors.textSecondary, marginVertical: spacing.md, textAlign: 'center' }}>No new notifications.</Text>
+          ) : (
+            unreadNotifications.map((notif: any) => {
+              const notifColor = getColorForType(notif.type);
+              return (
+              <TouchableOpacity key={notif.id} style={[styles.glassPanel, { borderColor: colors.border, backgroundColor: "rgba(255,255,255,0.05)" }]}>
+                {/* Unread Indicator Glow */}
+                <View style={[styles.unreadIndicator, { backgroundColor: notifColor, shadowColor: notifColor }]} />
+                
+                <View style={[styles.iconBox, { backgroundColor: notifColor + "33", borderColor: notifColor + "4D" }]}>
+                  <Ionicons name={getIconForType(notif.type) as any} size={24} color={notifColor} />
                 </View>
-                <Text style={[styles.notifText, { color: colors.textSecondary }]}>{notif.body}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+                
+                <View style={styles.notifBody}>
+                  <View style={styles.notifHeader}>
+                    <Text style={[styles.notifTitle, { color: colors.text }]} numberOfLines={1}>{notif.title}</Text>
+                    <Text style={[styles.notifTime, { color: colors.textSecondary }]}>
+                      {new Date(notif.createdAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                  <Text style={[styles.notifText, { color: colors.textSecondary }]}>{notif.message || notif.body}</Text>
+                </View>
+              </TouchableOpacity>
+              )
+            })
+          )}
 
           {/* Divider */}
           <View style={styles.dividerRow}>
@@ -146,21 +129,26 @@ export function NotificationsScreen() {
             <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
           </View>
 
-          {readNotifications.map((notif) => (
+          {readNotifications.map((notif: any) => {
+            const notifColor = getColorForType(notif.type);
+            return (
             <TouchableOpacity key={notif.id} style={[styles.glassPanel, { borderColor: colors.border, backgroundColor: "rgba(255,255,255,0.05)", opacity: 0.7 }]}>
-              <View style={[styles.iconBox, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
-                <Ionicons name={notif.icon as any} size={24} color={notif.color} />
+              <View style={[styles.iconBox, { backgroundColor: notifColor + "33", borderColor: notifColor + "4D" }]}>
+                <Ionicons name={getIconForType(notif.type) as any} size={24} color={notifColor} />
               </View>
               
               <View style={styles.notifBody}>
                 <View style={styles.notifHeader}>
                   <Text style={[styles.notifTitle, { color: colors.text }]} numberOfLines={1}>{notif.title}</Text>
-                  <Text style={[styles.notifTime, { color: colors.textSecondary }]}>{notif.time}</Text>
+                  <Text style={[styles.notifTime, { color: colors.textSecondary }]}>
+                    {new Date(notif.createdAt).toLocaleDateString()}
+                  </Text>
                 </View>
-                <Text style={[styles.notifText, { color: colors.textSecondary }]}>{notif.body}</Text>
+                <Text style={[styles.notifText, { color: colors.textSecondary }]}>{notif.message || notif.body}</Text>
               </View>
             </TouchableOpacity>
-          ))}
+            )
+          })}
         </View>
 
         <View style={styles.footerAction}>

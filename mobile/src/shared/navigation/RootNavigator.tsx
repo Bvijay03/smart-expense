@@ -27,6 +27,7 @@ import { GroupExpensesScreen } from "@/modules/groups/screens/GroupExpensesScree
 import { CategoriesScreen } from "@/modules/categories/screens/CategoriesScreen";
 import { RecurringScreen } from "@/modules/recurring/screens/RecurringScreen";
 import { MemberActivityScreen } from "@/modules/groups/screens/MemberActivityScreen";
+import { SearchScreen } from "@/modules/expenses/screens/SearchScreen";
 import { usePushNotifications } from "@/shared/hooks/usePushNotifications";
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -81,6 +82,7 @@ function AppNavigator() {
       <RootStack.Screen name="MemberActivity" component={MemberActivityScreen} options={{ headerShown: false }} />
       <RootStack.Screen name="Categories" component={CategoriesScreen} options={{ title: "Categories" }} />
       <RootStack.Screen name="Recurring" component={RecurringScreen} options={{ title: "Recurring" }} />
+      <RootStack.Screen name="Search" component={SearchScreen} options={{ headerShown: false }} />
     </RootStack.Navigator>
 
   );
